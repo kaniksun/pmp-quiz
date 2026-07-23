@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pmp-quiz-v2';
+const CACHE_NAME = 'pmp-quiz-v3';
 const APP_SHELL = [
   './',
   './index.html',
@@ -45,16 +45,17 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // App files: network-first with cache fallback
+  // App files: cache-first with network update (works even if URL goes offline)
   event.respondWith(
-    fetch(event.request)
-      .then((res) => {
+    caches.match(event.request).then((cached) => {
+      const networkFetch = fetch(event.request).then((res) => {
         if (res.ok) {
           const clone = res.clone();
           caches.open(CACHE_NAME).then((c) => c.put(event.request, clone));
         }
         return res;
-      })
-      .catch(() => caches.match(event.request))
+      });
+      return cached || networkFetch;
+    })
   );
 });
