@@ -1,98 +1,132 @@
 #!/usr/bin/env python3
-"""Generate PWA icons for the PMP quiz app (run once from pmp-app/ directory)."""
+"""Generate modern PWA icons for the PMP quiz app (requires Pillow)."""
 
 import os
-import struct
-import zlib
+import math
+from PIL import Image, ImageDraw, ImageFont
 
-ICON_DIR = os.path.join(os.path.dirname(__file__), 'icons')
+ICON_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'icons')
+
+# Colour palette
+C_TOP    = (49,  46, 129)   # #312e81 deep indigo
+C_MID    = (79,  70, 229)   # #4f46e5 indigo
+C_BOT    = (124, 58, 237)   # #7c3aed violet
+C_WHITE  = (255, 255, 255)
+C_GLOW   = (255, 255, 255)  # inner glow colour
 
 
-def _make_png(size: int, bg_rgb=(67, 56, 202), fg_rgb=(255, 255, 255)) -> bytes:
-    """Create a minimal solid-color PNG with a centred 'P' glyph using pure stdlib."""
-    w = h = size
+def _lerp_color(a, b, t):
+    return tuple(int(a[i] + (b[i] - a[i]) * t) for i in range(3))
 
-    # Tiny 5x7 pixel-art glyphs for P, M, P
-    def glyph_P():
-        return [
-            [1,1,1,1,0],
-            [1,0,0,0,1],
-            [1,1,1,1,0],
-            [1,0,0,0,0],
-            [1,0,0,0,0],
-            [1,0,0,0,0],
-            [1,0,0,0,0],
-        ]
 
-    def glyph_M():
-        return [
-            [1,0,0,0,1],
-            [1,1,0,1,1],
-            [1,0,1,0,1],
-            [1,0,0,0,1],
-            [1,0,0,0,1],
-            [1,0,0,0,1],
-            [1,0,0,0,1],
-        ]
+def _make_icon(size: int) -> Image.Image:
+    img = Image.new('RGB', (size, size))
+    px  = img.load()
 
-    scale = max(1, size // 36)
-    glyph_w = 5 * scale
-    glyph_h = 7 * scale
-    gap = scale * 2
+    # ── Diagonal gradient background ────────────────────────────────────────
+    for y in range(size):
+        for x in range(size):
+            t = (x + y) / (2 * size - 2)           # 0 (top-left) → 1 (bottom-right)
+            if t < 0.5:
+                c = _lerp_color(C_TOP, C_MID, t * 2)
+            else:
+                c = _lerp_color(C_MID, C_BOT, (t - 0.5) * 2)
+            px[x, y] = c
 
-    glyphs = [glyph_P(), glyph_M(), glyph_P()]
-    total_w = glyph_w * 3 + gap * 2
-    total_h = glyph_h
-    ox = (w - total_w) // 2
-    oy = (h - total_h) // 2
+    draw = ImageDraw.Draw(img, 'RGBA')
+    cx, cy = size // 2, size // 2
 
-    # Build pixel grid (RGB tuples)
-    pixels = [[bg_rgb] * w for _ in range(h)]
+    # ── Subtle radial glow in centre ────────────────────────────────────────
+    glow_r = int(size * 0.45)
+    for step in range(glow_r, 0, -1):
+        alpha = int(18 * (1 - step / glow_r) ** 2)
+        draw.ellipse(
+            [cx - step, cy - step, cx + step, cy + step],
+            fill=(*C_GLOW, alpha),
+        )
 
-    for gi, g in enumerate(glyphs):
-        gx_off = ox + gi * (glyph_w + gap)
-        for row_idx, row in enumerate(g):
-            for col_idx, on in enumerate(row):
-                if on:
-                    for dr in range(scale):
-                        for dc in range(scale):
-                            py = oy + row_idx * scale + dr
-                            px = gx_off + col_idx * scale + dc
-                            if 0 <= py < h and 0 <= px < w:
-                                pixels[py][px] = fg_rgb
+    # ── Concentric ring accent ───────────────────────────────────────────────
+    ring_r  = int(size * 0.40)
+    ring_lw = max(1, size // 60)
+    draw.ellipse(
+        [cx - ring_r, cy - ring_r, cx + ring_r, cy + ring_r],
+        outline=(*C_WHITE, 50),
+        width=ring_lw,
+    )
+    ring_r2 = int(size * 0.46)
+    draw.ellipse(
+        [cx - ring_r2, cy - ring_r2, cx + ring_r2, cy + ring_r2],
+        outline=(*C_WHITE, 20),
+        width=ring_lw,
+    )
 
-    # Encode as PNG
-    raw_rows = bytearray()
-    for row in pixels:
-        raw_rows.append(0)  # filter byte (None)
-        for r, g_, b in row:
-            raw_rows += bytes([r, g_, b])
+    # ── "PMP" text ──────────────────────────────────────────────────────────
+    font_size = max(8, int(size * 0.30))
+    font = None
+    for path in [
+        r'C:\Windows\Fonts\arialbd.ttf',
+        r'C:\Windows\Fonts\calibrib.ttf',
+        r'C:\Windows\Fonts\verdanab.ttf',
+        r'C:\Windows\Fonts\trebucbd.ttf',
+    ]:
+        try:
+            font = ImageFont.truetype(path, font_size)
+            break
+        except Exception:
+            continue
+    if font is None:
+        font = ImageFont.load_default()
 
-    def chunk(name: bytes, data: bytes) -> bytes:
-        crc = zlib.crc32(name + data) & 0xFFFFFFFF
-        return struct.pack('>I', len(data)) + name + data + struct.pack('>I', crc)
+    text = 'PMP'
+    bb   = draw.textbbox((0, 0), text, font=font)
+    tw, th = bb[2] - bb[0], bb[3] - bb[1]
+    tx = cx - tw // 2 - bb[0]
+    ty = cy - th // 2 - bb[1] - int(size * 0.02)   # slight upward nudge
 
-    sig = b'\x89PNG\r\n\x1a\n'
-    ihdr = chunk(b'IHDR', struct.pack('>IIBBBBB', w, h, 8, 2, 0, 0, 0))
-    idat = chunk(b'IDAT', zlib.compress(bytes(raw_rows), 9))
-    iend = chunk(b'IEND', b'')
-    return sig + ihdr + idat + iend
+    # Drop shadow
+    sd = max(1, size // 80)
+    draw.text((tx + sd, ty + sd), text, font=font, fill=(0, 0, 0, 80))
+    # Main white text
+    draw.text((tx, ty), text, font=font, fill=(*C_WHITE, 255))
+
+    # ── Small label "演習" under PMP ────────────────────────────────────────
+    sub_size = max(6, int(size * 0.095))
+    sub_font = None
+    for path in [
+        r'C:\Windows\Fonts\YuGothB.ttc',
+        r'C:\Windows\Fonts\msgothic.ttc',
+        r'C:\Windows\Fonts\meiryo.ttc',
+    ]:
+        try:
+            sub_font = ImageFont.truetype(path, sub_size)
+            break
+        except Exception:
+            continue
+
+    if sub_font and size >= 96:
+        sub_text = '演習'
+        sbb = draw.textbbox((0, 0), sub_text, font=sub_font)
+        stw = sbb[2] - sbb[0]
+        sx  = cx - stw // 2 - sbb[0]
+        sy  = ty + th + int(size * 0.03)
+        draw.text((sx, sy), sub_text, font=sub_font, fill=(*C_WHITE, 180))
+
+    return img
 
 
 def main():
     os.makedirs(ICON_DIR, exist_ok=True)
 
     specs = [
-        ('icon-192.png', 192),
-        ('icon-512.png', 512),
+        ('icon-192.png',        192),
+        ('icon-512.png',        512),
         ('apple-touch-icon.png', 180),
     ]
 
     for filename, size in specs:
         path = os.path.join(ICON_DIR, filename)
-        data = _make_png(size)
-        with open(path, 'wb') as f:
-            f.write(data)
+        img  = _make_icon(size)
+        img.save(path, 'PNG', optimize=True)
         print(f'  ✓ {filename} ({size}×{size})')
 
     print('\nIcons generated in:', ICON_DIR)
