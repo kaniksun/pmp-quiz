@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+  <!-- PWA / iOS -->
+  <meta name="theme-color" content="#4338ca">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PMP演習">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+  <title>PMP問題演習</title>
+
+  <!-- Tailwind CSS (Play CDN — JIT in browser) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['"Hiragino Kaku Gothic ProN"', '"Noto Sans JP"', 'sans-serif'] },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    /* Prevent FOUC */
+    [v-cloak] { display: none !important; }
+
+    /* Screen transitions */
+    .fade-enter-active, .fade-leave-active { transition: opacity 0.18s ease; }
+    .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+    /* Explanation slide-up */
+    .slide-up-enter-active { transition: all 0.25s ease; }
+    .slide-up-enter-from { opacity: 0; transform: translateY(12px); }
+
+    /* Safe area padding for notch devices */
+    body { padding-bottom: env(safe-area-inset-bottom, 0); }
+
+    /* Hide scrollbar on iOS quiz scroll area */
+    .overflow-y-auto { -webkit-overflow-scrolling: touch; }
+
+    /* Select arrow fix */
+    select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900 antialiased">
+  <div id="app" v-cloak class="max-w-lg mx-auto min-h-screen shadow-2xl bg-white relative overflow-hidden">
+    <!-- Vue renders here -->
+  </div>
+
+  <!-- Vue 3 (global build — no build tools needed) -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+
+  <!-- App modules (order matters: db → parser → app) -->
+  <script src="js/db.js"></script>
+  <script src="js/parser.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
