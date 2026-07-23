@@ -89,28 +89,6 @@ def _make_icon(size: int) -> Image.Image:
     # Main white text
     draw.text((tx, ty), text, font=font, fill=(*C_WHITE, 255))
 
-    # ── Small label "演習" under PMP ────────────────────────────────────────
-    sub_size = max(6, int(size * 0.095))
-    sub_font = None
-    for path in [
-        r'C:\Windows\Fonts\YuGothB.ttc',
-        r'C:\Windows\Fonts\msgothic.ttc',
-        r'C:\Windows\Fonts\meiryo.ttc',
-    ]:
-        try:
-            sub_font = ImageFont.truetype(path, sub_size)
-            break
-        except Exception:
-            continue
-
-    if sub_font and size >= 96:
-        sub_text = '演習'
-        sbb = draw.textbbox((0, 0), sub_text, font=sub_font)
-        stw = sbb[2] - sbb[0]
-        sx  = cx - stw // 2 - sbb[0]
-        sy  = ty + th + int(size * 0.03)
-        draw.text((sx, sy), sub_text, font=sub_font, fill=(*C_WHITE, 180))
-
     return img
 
 
