@@ -352,16 +352,9 @@ const QuizScreen = {
         <div class="bg-white rounded-2xl shadow-sm p-5 mb-4">
           <!-- Type badge -->
           <div class="flex items-center gap-2 mb-3">
-            <span v-if="current.isMultiSelect"
-              class="text-xs bg-amber-100 text-amber-700 font-semibold px-2 py-0.5 rounded-full">
-              ※{{ current.selectionCount }}つ選択
-            </span>
-            <span v-else-if="current.questionType === 'match'"
+            <span v-if="current.questionType === 'match'"
               class="text-xs bg-violet-100 text-violet-700 font-semibold px-2 py-0.5 rounded-full">
               対応付け問題
-            </span>
-            <span v-else class="text-xs bg-indigo-100 text-indigo-600 font-semibold px-2 py-0.5 rounded-full">
-              単一選択
             </span>
             <span v-if="current.label"
               class="text-xs bg-gray-100 text-gray-500 font-medium px-2 py-0.5 rounded-full">
@@ -395,14 +388,11 @@ const QuizScreen = {
               {{ current.optionLabels[idx] }}
             </span>
             <span class="flex-1 text-gray-700 text-sm leading-relaxed">{{ opt }}</span>
-            <!-- Result badge (reviewed state) -->
-            <span v-if="phase === 'reviewed'" class="flex-shrink-0 leading-none self-center">
-              <span v-if="correctIndices.includes(idx + 1) && selected.includes(idx + 1)"
-                class="text-sm font-bold text-green-600">✅ 正解</span>
-              <span v-else-if="correctIndices.includes(idx + 1) && !selected.includes(idx + 1)"
-                class="text-xs font-bold text-green-600 bg-green-100 px-1.5 py-0.5 rounded-md whitespace-nowrap">✓ 正解</span>
-              <span v-else-if="!correctIndices.includes(idx + 1) && selected.includes(idx + 1)"
-                class="text-sm font-bold text-red-500">❌ 不正解</span>
+            <!-- Result icon (reviewed state) -->
+            <span v-if="phase === 'reviewed'" class="flex-shrink-0 text-xl leading-none self-center">
+              <span v-if="correctIndices.includes(idx + 1) && selected.includes(idx + 1)">✅</span>
+              <span v-else-if="correctIndices.includes(idx + 1) && !selected.includes(idx + 1)">⭕</span>
+              <span v-else-if="!correctIndices.includes(idx + 1) && selected.includes(idx + 1)">❌</span>
             </span>
           </div>
         </div>
