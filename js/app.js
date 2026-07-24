@@ -391,7 +391,7 @@ const QuizScreen = {
             <!-- Result icon (reviewed state) -->
             <span v-if="phase === 'reviewed'" class="flex-shrink-0 text-xl leading-none self-center">
               <span v-if="correctIndices.includes(idx + 1) && selected.includes(idx + 1)">✅</span>
-              <span v-else-if="correctIndices.includes(idx + 1) && !selected.includes(idx + 1)">⭕</span>
+              <span v-else-if="correctIndices.includes(idx + 1) && !selected.includes(idx + 1)">💡</span>
               <span v-else-if="!correctIndices.includes(idx + 1) && selected.includes(idx + 1)">❌</span>
             </span>
           </div>
