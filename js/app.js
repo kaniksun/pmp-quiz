@@ -381,9 +381,13 @@ const QuizScreen = {
             <!-- Checkbox visual -->
             <div class="mt-0.5 w-5 h-5 rounded flex-shrink-0 flex items-center justify-center border-2 transition-all"
               :class="optionCheckClass(idx + 1)">
+              <!-- 選択した選択肢: 白チェックマーク -->
               <svg v-if="selected.includes(idx + 1)" class="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none">
                 <path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
+              <!-- 正解だが未選択: 緑ドット（正解マーカー） -->
+              <span v-else-if="phase === 'reviewed' && correctIndices.includes(idx + 1)"
+                class="w-2.5 h-2.5 rounded-full bg-green-500 block"></span>
             </div>
             <!-- Original label badge (A/B/C/D) — shown only after answering -->
             <span v-if="current.optionLabels && phase === 'reviewed'"
@@ -391,9 +395,14 @@ const QuizScreen = {
               {{ current.optionLabels[idx] }}
             </span>
             <span class="flex-1 text-gray-700 text-sm leading-relaxed">{{ opt }}</span>
-            <!-- Result icon -->
-            <span v-if="phase === 'reviewed'" class="flex-shrink-0 text-lg leading-none">
-              {{ reviewIcon(idx + 1) }}
+            <!-- Result badge (reviewed state) -->
+            <span v-if="phase === 'reviewed'" class="flex-shrink-0 leading-none self-center">
+              <span v-if="correctIndices.includes(idx + 1) && selected.includes(idx + 1)"
+                class="text-sm font-bold text-green-600">✅ 正解</span>
+              <span v-else-if="correctIndices.includes(idx + 1) && !selected.includes(idx + 1)"
+                class="text-xs font-bold text-green-600 bg-green-100 px-1.5 py-0.5 rounded-md whitespace-nowrap">✓ 正解</span>
+              <span v-else-if="!correctIndices.includes(idx + 1) && selected.includes(idx + 1)"
+                class="text-sm font-bold text-red-500">❌ 不正解</span>
             </span>
           </div>
         </div>
