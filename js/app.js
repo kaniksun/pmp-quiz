@@ -363,6 +363,10 @@ const QuizScreen = {
             <span v-else class="text-xs bg-indigo-100 text-indigo-600 font-semibold px-2 py-0.5 rounded-full">
               単一選択
             </span>
+            <span v-if="current.label"
+              class="text-xs bg-gray-100 text-gray-500 font-medium px-2 py-0.5 rounded-full">
+              {{ current.label }}
+            </span>
           </div>
           <p class="text-gray-800 leading-relaxed font-medium">{{ current.title }}</p>
         </div>
@@ -777,6 +781,31 @@ const HistoryScreen = {
           </div>
         </div>
 
+        <!-- Label stats -->
+        <div v-if="labelStats.length" class="bg-white rounded-2xl shadow-sm p-4">
+          <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">カテゴリ別正答率</p>
+          <p class="text-xs text-gray-300 mb-3">低い順（苦手カテゴリが上に表示されます）</p>
+          <div class="space-y-3">
+            <div v-for="s in labelStats" :key="s.label">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-sm font-medium text-gray-700">{{ s.label }}</span>
+                <span class="text-sm font-bold"
+                  :class="s.accuracy >= 70 ? 'text-green-500' : s.accuracy >= 50 ? 'text-amber-500' : 'text-red-500'">
+                  {{ s.accuracy }}%
+                </span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div class="h-full rounded-full transition-all duration-700"
+                    :class="s.accuracy >= 70 ? 'bg-green-400' : s.accuracy >= 50 ? 'bg-amber-400' : 'bg-red-400'"
+                    :style="{ width: s.accuracy + '%' }"></div>
+                </div>
+                <span class="text-xs text-gray-400 w-14 text-right">{{ s.correct }}/{{ s.total }}問</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Weak questions list -->
         <div v-if="weakQuestions.length" class="bg-white rounded-2xl shadow-sm p-4">
           <p class="text-xs text-gray-400 uppercase tracking-wide mb-3">苦手問題 TOP{{ weakQuestions.length }}</p>
@@ -838,13 +867,17 @@ const HistoryScreen = {
     const stats = ref({ totalSessions: 0, totalAnswers: 0, accuracy: 0, streak: 0, recentSessions: [] });
     const sessions = ref([]);
     const weakQuestions = ref([]);
+    const labelStats = ref([]);
 
     onMounted(async () => {
       try {
-        const [s, w, all] = await Promise.all([DB.getStats(), DB.getWeakQuestions(), DB.getSessions()]);
+        const [s, w, all, lb] = await Promise.all([
+          DB.getStats(), DB.getWeakQuestions(), DB.getSessions(), DB.getLabelStats(),
+        ]);
         stats.value = s;
         weakQuestions.value = w.slice(0, 10);
         sessions.value = all;
+        labelStats.value = lb;
       } catch (_) {}
     });
 
@@ -861,9 +894,10 @@ const HistoryScreen = {
       stats.value = { totalSessions: 0, totalAnswers: 0, accuracy: 0, streak: 0, recentSessions: [] };
       sessions.value = [];
       weakQuestions.value = [];
+      labelStats.value = [];
     }
 
-    return { stats, sessions, weakQuestions, chartData, formatDate, confirmClear };
+    return { stats, sessions, weakQuestions, labelStats, chartData, formatDate, confirmClear };
   },
 };
 

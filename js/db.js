@@ -172,6 +172,43 @@ const DB = (() => {
         .sort((a, b) => b.wrongRate - a.wrongRate);
     },
 
+    /**
+     * Compute per-label accuracy stats from all answers.
+     * Uses q.label if cached; falls back to Parser.autoLabel at runtime.
+     * Returns array sorted by accuracy ascending (weakest label first).
+     */
+    async getLabelStats() {
+      const [answers, allQ] = await Promise.all([_getAll('answers'), _getAll('questions')]);
+      const qMap = {};
+      for (const q of allQ) qMap[q.id] = q;
+
+      function resolveLabel(q) {
+        if (q.label) return q.label;
+        // Fallback for questions cached before labeling was introduced
+        if (typeof Parser !== 'undefined' && Parser.autoLabel) return Parser.autoLabel(q.title || '');
+        return 'プロジェクト管理（一般）';
+      }
+
+      const stats = {};
+      for (const a of answers) {
+        const q = qMap[a.questionId];
+        if (!q) continue;
+        const lbl = resolveLabel(q);
+        if (!stats[lbl]) stats[lbl] = { total: 0, correct: 0 };
+        stats[lbl].total++;
+        if (a.isCorrect) stats[lbl].correct++;
+      }
+
+      return Object.entries(stats)
+        .map(([label, s]) => ({
+          label,
+          total: s.total,
+          correct: s.correct,
+          accuracy: Math.round((s.correct / s.total) * 100),
+        }))
+        .sort((a, b) => a.accuracy - b.accuracy);
+    },
+
     /** Delete all data (for reset) */
     async clearAll() {
       await Promise.all([

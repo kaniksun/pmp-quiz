@@ -2,6 +2,28 @@
  * parser.js — TSV question parser and quiz utilities
  */
 const Parser = (() => {
+  // ── PMP カテゴリ自動ラベリング ──────────────────────────────────────────────
+  // PMP ECO (Exam Content Outline) に基づくカテゴリ。
+  // 先に書かれたルールが優先される（より具体的なものを上に置く）。
+  const LABEL_RULES = [
+    ['リスク管理',           /リスク|助成金/],
+    ['調達・契約',           /調達|契約|ベンダー|サプライヤー|コントラクター/],
+    ['品質管理',             /品質|テスト|欠陥|バグ|ユーザー受容/],
+    ['ステークホルダー管理', /ステークホルダー/],
+    ['スケジュール・コスト', /スケジュール|コスト|予算|スコープ|WBS|EVM|SPI|CPI|クリティカル・パス|バジェット|タスク[A-Z]|遅延/],
+    ['ガバナンス・変革',     /変更管理|ガバナンス|コンプライアンス|組織変革|規制|監査|変更委員会|CCB|運営委員会|変更要求|フィジビリティ|健康/],
+    ['コミュニケーション',   /コミュニケーション|報告書|情報ラジエーター|ダッシュボード|会議|ミーティング/],
+    ['アジャイル実践',       /アジャイル|イテレーション|スプリント|バックログ|レトロスペクティブ|カンバン|スクラム|フィーチャー|ベロシティ|バーン|プロダクト・オーナー/],
+    ['チームマネジメント',   /チーム|リーダー|モチベーション|サーバント|コンフリクト|対立|紛争|メンバー|能力不足/],
+  ];
+
+  function autoLabel(title) {
+    for (const [lbl, pat] of LABEL_RULES) {
+      if (pat.test(title)) return lbl;
+    }
+    return 'プロジェクト管理（一般）';
+  }
+
   function parseListField(v) {
     if (!v || typeof v !== 'string') return [];
     return v.trim().split('|').map((s) => s.trim()).filter(Boolean);
@@ -46,6 +68,8 @@ const Parser = (() => {
     q.matchOptions = parseListField(q.matchOptions || '');
     // ans for match: "2,3,1,4" (1-based option index per row)
     q.ans = (q.ans || '').trim();
+    // PMP category label (auto-assigned from question text)
+    q.label = autoLabel(q.title);
     return q;
   }
 
@@ -108,5 +132,5 @@ const Parser = (() => {
     );
   }
 
-  return { parseTsvData, shuffleArray, shuffleQuestion, checkAnswer };
+  return { parseTsvData, shuffleArray, shuffleQuestion, checkAnswer, autoLabel };
 })();
