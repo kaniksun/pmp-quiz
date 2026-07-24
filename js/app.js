@@ -522,23 +522,31 @@ const QuizScreen = {
       // reviewed
       const isCorrect = correctIndices.value.includes(idx);
       const isSelected = selected.value.includes(idx);
-      if (isCorrect && isSelected) return 'border-green-400 bg-green-50';
+      if (isCorrect && isSelected)  return 'border-green-400 bg-green-50';
       if (isCorrect && !isSelected) return 'border-green-300 bg-green-50/50';
-      if (!isCorrect && isSelected) return 'border-red-400 bg-red-50';
-      return 'border-transparent opacity-50';
+      if (!isCorrect && isSelected) return 'border-red-500 bg-red-100';   // 誤選択: 濃い赤
+      return 'border-transparent opacity-40';
     }
 
     function optionCheckClass(idx) {
+      if (phase.value === 'reviewed') {
+        const isCorrect  = correctIndices.value.includes(idx);
+        const isSelected = selected.value.includes(idx);
+        if (isSelected && isCorrect)  return 'bg-green-500 border-green-500';  // 正解を選んだ
+        if (isSelected && !isCorrect) return 'bg-red-500 border-red-500';      // 誤選択
+        if (!isSelected && isCorrect) return 'border-green-400 bg-white';      // 選ばなかった正解
+        return 'border-gray-300';
+      }
       if (selected.value.includes(idx)) return 'bg-indigo-600 border-indigo-600';
       return 'border-gray-300';
     }
 
     function reviewIcon(idx) {
-      const isCorrect = correctIndices.value.includes(idx);
+      const isCorrect  = correctIndices.value.includes(idx);
       const isSelected = selected.value.includes(idx);
-      if (isCorrect && isSelected) return '✅';
-      if (isCorrect && !isSelected) return '⭕';
-      if (!isCorrect && isSelected) return '❌';
+      if (isCorrect && isSelected)  return '✅';  // 正解を選んだ
+      if (isCorrect && !isSelected) return '💡';  // 正解だが未選択（選ぶべきだった）
+      if (!isCorrect && isSelected) return '❌';  // 誤選択
       return '';
     }
 
