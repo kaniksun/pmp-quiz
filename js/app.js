@@ -352,7 +352,11 @@ const QuizScreen = {
         <div class="bg-white rounded-2xl shadow-sm p-5 mb-4">
           <!-- Type badge -->
           <div class="flex items-center gap-2 mb-3">
-            <span v-if="current.questionType === 'match'"
+            <span v-if="current.isMultiSelect"
+              class="text-xs bg-amber-100 text-amber-700 font-semibold px-2 py-0.5 rounded-full">
+              ☑️ 複数選択
+            </span>
+            <span v-else-if="current.questionType === 'match'"
               class="text-xs bg-violet-100 text-violet-700 font-semibold px-2 py-0.5 rounded-full">
               対応付け問題
             </span>
@@ -362,6 +366,9 @@ const QuizScreen = {
             </span>
           </div>
           <p class="text-gray-800 leading-relaxed font-medium">{{ current.title }}</p>
+          <p v-if="current.isMultiSelect" class="text-xs text-amber-600 font-semibold mt-2">
+            ※ 該当するものをすべて選択してください（選択数のヒントはありません）
+          </p>
         </div>
 
         <!-- Options: single / multi select -->
