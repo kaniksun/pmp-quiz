@@ -139,6 +139,35 @@ const HomeScreen = {
             </div>
           </div>
 
+          <!-- Sequential progress indicator -->
+          <template v-if="quizOrder === 'sequential' && sequentialProgress && sequentialProgress.lastIndex > 0">
+            <div class="bg-indigo-50 border border-indigo-100 rounded-2xl px-4 py-3">
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-sm font-medium text-indigo-700">📍 前回の進捗</p>
+                <span class="text-xs font-bold"
+                  :class="sequentialProgress.lastIndex >= questions.length ? 'text-green-600' : 'text-indigo-500'">
+                  {{ Math.min(sequentialProgress.lastIndex, questions.length) }} / {{ questions.length }} 問
+                </span>
+              </div>
+              <div v-if="sequentialProgress.lastIndex < questions.length" class="flex gap-2">
+                <button @click="continueSequential = false"
+                  :class="!continueSequential ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100'"
+                  class="flex-1 py-2 rounded-xl text-sm font-semibold transition-all border border-indigo-100">
+                  最初から
+                </button>
+                <button @click="continueSequential = true"
+                  :class="continueSequential ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100'"
+                  class="flex-1 py-2 rounded-xl text-sm font-semibold transition-all border border-indigo-100">
+                  続きから（{{ sequentialProgress.lastIndex + 1 }}問目〜）
+                </button>
+              </div>
+              <div v-else class="flex items-center justify-between">
+                <span class="text-sm text-green-600 font-medium">🎉 全問完了！</span>
+                <button @click="resetSeqProgress" class="text-xs text-indigo-500 font-medium underline">リセット</button>
+              </div>
+            </div>
+          </template>
+
           <!-- Start buttons -->
           <button @click="startQuiz('main')"
             class="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold py-4 rounded-2xl text-lg shadow-lg transition-all">
@@ -191,6 +220,8 @@ const HomeScreen = {
 
     const hasQuestions = computed(() => props.questions.length > 0);
     const quizOrder = ref('random');
+    const sequentialProgress = ref(null);
+    const continueSequential = ref(true);
     const suspendedSession = ref(null);
 
     const countOptions = computed(() => {
@@ -205,6 +236,12 @@ const HomeScreen = {
         stats.value = s;
         recentSessions.value = s.recentSessions;
         hasHistory.value = s.totalAnswers > 0;
+      } catch (_) {}
+
+      // Check for sequential progress
+      try {
+        const seqRaw = localStorage.getItem('pmp-sequential-progress');
+        if (seqRaw) sequentialProgress.value = JSON.parse(seqRaw);
       } catch (_) {}
 
       // Check for a suspended quiz session
@@ -246,6 +283,7 @@ const HomeScreen = {
       const count = Math.min(selectedCount.value, props.questions.length);
       let pool;
       let effectiveMode = mode;
+      let seqStartIdx = 0;
 
       if (mode === 'weak') {
         const weak = await DB.getWeakQuestions();
@@ -254,14 +292,19 @@ const HomeScreen = {
         pool = Parser.shuffleArray(props.questions.filter((q) => ids.has(q.id))).slice(0, count);
         if (pool.length < count) pool = [...pool, ...Parser.shuffleArray(props.questions.filter((q) => !ids.has(q.id)))].slice(0, count);
       } else if (quizOrder.value === 'sequential') {
-        pool = props.questions.slice(0, count);
+        if (continueSequential.value && sequentialProgress.value && sequentialProgress.value.lastIndex > 0) {
+          const prog = sequentialProgress.value.lastIndex;
+          seqStartIdx = prog < props.questions.length ? prog : 0;
+        }
+        pool = props.questions.slice(seqStartIdx, seqStartIdx + count);
+        if (!pool.length) pool = props.questions.slice(0, count);
         effectiveMode = 'sequential';
       } else {
         pool = Parser.shuffleArray(props.questions).slice(0, count);
         effectiveMode = 'random';
       }
 
-      emit('start-quiz', pool.map(Parser.shuffleQuestion), effectiveMode);
+      emit('start-quiz', pool.map(Parser.shuffleQuestion), effectiveMode, seqStartIdx);
     }
 
     function resumeQuiz() {
@@ -274,7 +317,13 @@ const HomeScreen = {
       suspendedSession.value = null;
     }
 
-    return { stats, recentSessions, hasHistory, loadError, fileInput, selectedCount, quizOrder, suspendedSession, countOptions, hasQuestions, formatDate, showFileInput, onFileChange, startQuiz, resumeQuiz, discardSuspended };
+    function resetSeqProgress() {
+      localStorage.removeItem('pmp-sequential-progress');
+      sequentialProgress.value = null;
+      continueSequential.value = true;
+    }
+
+    return { stats, recentSessions, hasHistory, loadError, fileInput, selectedCount, quizOrder, sequentialProgress, continueSequential, suspendedSession, countOptions, hasQuestions, formatDate, showFileInput, onFileChange, startQuiz, resumeQuiz, discardSuspended, resetSeqProgress };
   },
 };
 
@@ -847,15 +896,17 @@ createApp({
     const quizQuestions = ref([]);
     const quizResults = ref([]);
     const quizMode = ref('random');
+    const quizSeqStartIdx = ref(0);
     const quizInitialState = ref(null);
 
     function navigate(target) { screen.value = target; }
 
     function onQuestionsLoaded(qs) { questions.value = qs; }
 
-    function onStartQuiz(pool, mode) {
+    function onStartQuiz(pool, mode, seqStartIdx = 0) {
       quizQuestions.value = pool;
       quizMode.value = mode;
+      quizSeqStartIdx.value = seqStartIdx;
       quizResults.value = [];
       quizInitialState.value = null;
       localStorage.removeItem('pmp-quiz-suspended');
@@ -896,6 +947,14 @@ createApp({
         }));
         await DB.saveAnswers(answers);
       } catch (_) {}
+
+      // Save sequential progress
+      if (quizMode.value === 'sequential') {
+        try {
+          const nextIdx = quizSeqStartIdx.value + results.length;
+          localStorage.setItem('pmp-sequential-progress', JSON.stringify({ lastIndex: nextIdx }));
+        } catch (_) {}
+      }
 
       screen.value = 'result';
     }
