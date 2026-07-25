@@ -371,6 +371,16 @@ const QuizScreen = {
           </p>
         </div>
 
+        <!-- Case study reference -->
+        <div v-if="caseStudy" class="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 mb-4">
+          <button @click="showCaseStudy = !showCaseStudy"
+            class="w-full flex items-center justify-between text-indigo-700 font-semibold text-sm">
+            <span>📖 {{ caseStudy.title }}</span>
+            <span>{{ showCaseStudy ? '▲ 閉じる' : '▼ 確認する' }}</span>
+          </button>
+          <p v-if="showCaseStudy" class="text-xs text-gray-600 leading-relaxed mt-3 whitespace-pre-line">{{ caseStudy.text }}</p>
+        </div>
+
         <!-- Options: single / multi select -->
         <div v-if="current.questionType !== 'match'" class="space-y-3">
           <div
@@ -452,7 +462,7 @@ const QuizScreen = {
       </div>
     </div>
   `,
-  props: ['questions', 'initialState'],
+  props: ['questions', 'initialState', 'mode', 'seqStartIdx'],
   emits: ['complete', 'abort'],
   setup(props, { emit }) {
     const init = props.initialState ?? {};
@@ -476,6 +486,8 @@ const QuizScreen = {
     onMounted(startTimer);
 
     const current = computed(() => props.questions[qno.value]);
+    const showCaseStudy = ref(false);
+    const caseStudy = computed(() => (typeof CaseStudies !== 'undefined' && current.value) ? CaseStudies.forQuestion(current.value.id) : null);
 
     const timerText = computed(() => {
       const s = Math.floor(elapsed.value / 1000);
@@ -601,6 +613,8 @@ const QuizScreen = {
         matchSelected: matchSelected.value,
         lastCorrect: lastCorrect.value,
         savedAt: new Date().toISOString(),
+        mode: props.mode,
+        seqStartIdx: props.seqStartIdx,
       };
       try { localStorage.setItem('pmp-quiz-suspended', JSON.stringify(state)); } catch (_) {}
       emit('abort');
@@ -618,12 +632,14 @@ const QuizScreen = {
       matchSelected.value = [];
       lastCorrect.value = null;
       elapsed.value = 0;
+      showCaseStudy.value = false;
       startTimer();
     }
 
     return {
       qno, phase, selected, matchSelected, results, lastCorrect, elapsed,
       current, timerText, progressPct, optionList, correctIndices, correctDisplay, correctTextDisplay, canSubmit,
+      caseStudy, showCaseStudy,
       toggleOption, optionClass, optionCheckClass, reviewIcon, matchSelectClass,
       submitAnswer, nextQuestion, handleAbort,
     };
@@ -847,7 +863,7 @@ const HistoryScreen = {
               class="py-3 flex items-center justify-between">
               <div>
                 <div class="text-sm font-medium text-gray-700">{{ formatDate(s.date) }}</div>
-                <div class="text-xs text-gray-400">{{ s.totalQuestions }}問 ／ {{ s.mode === 'weak' ? '苦手モード' : 'ランダム' }}</div>
+                <div class="text-xs text-gray-400">{{ s.totalQuestions }}問 ／ {{ modeLabel(s.mode) }}</div>
               </div>
               <div class="text-right">
                 <div class="font-bold text-lg"
@@ -903,7 +919,17 @@ const HistoryScreen = {
       labelStats.value = [];
     }
 
-    return { stats, sessions, weakQuestions, labelStats, chartData, formatDate, confirmClear };
+    function modeLabel(mode) {
+      switch (mode) {
+        case 'weak': return '苦手モード';
+        case 'sequential': return '順番どおり';
+        case 'retry': return '間違い復習';
+        case 'resumed': return '再開';
+        default: return 'ランダム';
+      }
+    }
+
+    return { stats, sessions, weakQuestions, labelStats, chartData, formatDate, confirmClear, modeLabel };
   },
 };
 
@@ -925,6 +951,8 @@ createApp({
         <QuizScreen v-else-if="screen === 'quiz'" key="quiz"
           :questions="quizQuestions"
           :initialState="quizInitialState"
+          :mode="quizMode"
+          :seqStartIdx="quizSeqStartIdx"
           @complete="onQuizComplete"
           @abort="screen = 'home'" />
 
@@ -963,7 +991,8 @@ createApp({
 
     function onResumeQuiz(state) {
       quizQuestions.value = state.questions;
-      quizMode.value = 'resumed';
+      quizMode.value = state.mode || 'resumed';
+      quizSeqStartIdx.value = state.seqStartIdx || 0;
       quizResults.value = [];
       quizInitialState.value = state;
       screen.value = 'quiz';
@@ -1011,7 +1040,10 @@ createApp({
       const wrong = quizResults.value.filter((r) => r.isCorrect !== true).map((r) => r.question);
       if (!wrong.length) return;
       quizQuestions.value = wrong.map(Parser.shuffleQuestion);
+      quizMode.value = 'retry';
+      quizSeqStartIdx.value = 0;
       quizResults.value = [];
+      localStorage.removeItem('pmp-quiz-suspended');
       screen.value = 'quiz';
     }
 
@@ -1020,6 +1052,6 @@ createApp({
       navigator.serviceWorker.register('./sw.js').catch(() => {});
     }
 
-    return { screen, questions, quizQuestions, quizResults, quizInitialState, navigate, onQuestionsLoaded, onStartQuiz, onResumeQuiz, onQuizComplete, retryWrong };
+    return { screen, questions, quizQuestions, quizResults, quizInitialState, quizMode, quizSeqStartIdx, navigate, onQuestionsLoaded, onStartQuiz, onResumeQuiz, onQuizComplete, retryWrong };
   },
 }).mount('#app');
