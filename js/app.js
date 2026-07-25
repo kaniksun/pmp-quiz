@@ -139,29 +139,45 @@ const HomeScreen = {
             </div>
           </div>
 
-          <!-- Sequential progress indicator -->
-          <template v-if="quizOrder === 'sequential' && sequentialProgress && sequentialProgress.lastIndex > 0">
-            <div class="bg-indigo-50 border border-indigo-100 rounded-2xl px-4 py-3">
-              <div class="flex items-center justify-between mb-2">
+          <!-- Sequential progress / start position -->
+          <template v-if="quizOrder === 'sequential'">
+            <div class="bg-indigo-50 border border-indigo-100 rounded-2xl px-4 py-3 space-y-3">
+              <div v-if="sequentialProgress && sequentialProgress.lastIndex > 0" class="flex items-center justify-between">
                 <p class="text-sm font-medium text-indigo-700">📍 前回の進捗</p>
                 <span class="text-xs font-bold"
                   :class="sequentialProgress.lastIndex >= questions.length ? 'text-green-600' : 'text-indigo-500'">
                   {{ Math.min(sequentialProgress.lastIndex, questions.length) }} / {{ questions.length }} 問
                 </span>
               </div>
-              <div v-if="sequentialProgress.lastIndex < questions.length" class="flex gap-2">
-                <button @click="continueSequential = false"
-                  :class="!continueSequential ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100'"
+
+              <div class="flex flex-wrap gap-2">
+                <button @click="seqStartMode = 'beginning'"
+                  :class="seqStartMode === 'beginning' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100'"
                   class="flex-1 py-2 rounded-xl text-sm font-semibold transition-all border border-indigo-100">
                   最初から
                 </button>
-                <button @click="continueSequential = true"
-                  :class="continueSequential ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100'"
+                <button v-if="sequentialProgress && sequentialProgress.lastIndex > 0 && sequentialProgress.lastIndex < questions.length"
+                  @click="seqStartMode = 'continue'"
+                  :class="seqStartMode === 'continue' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100'"
                   class="flex-1 py-2 rounded-xl text-sm font-semibold transition-all border border-indigo-100">
                   続きから（{{ sequentialProgress.lastIndex + 1 }}問目〜）
                 </button>
+                <button @click="seqStartMode = 'custom'"
+                  :class="seqStartMode === 'custom' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100'"
+                  class="flex-1 py-2 rounded-xl text-sm font-semibold transition-all border border-indigo-100">
+                  問題番号を指定
+                </button>
               </div>
-              <div v-else class="flex items-center justify-between">
+
+              <div v-if="seqStartMode === 'custom'" class="flex items-center gap-2">
+                <span class="text-sm text-gray-600 whitespace-nowrap">開始する問題番号</span>
+                <input type="number" min="1" :max="questions.length" v-model.number="customStartNo"
+                  @change="clampCustomStartNo"
+                  class="w-20 border border-indigo-200 rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                <span class="text-sm text-gray-400">/ {{ questions.length }} 問目〜</span>
+              </div>
+
+              <div v-if="sequentialProgress && sequentialProgress.lastIndex >= questions.length" class="flex items-center justify-between">
                 <span class="text-sm text-green-600 font-medium">🎉 全問完了！</span>
                 <button @click="resetSeqProgress" class="text-xs text-indigo-500 font-medium underline">リセット</button>
               </div>
@@ -221,7 +237,8 @@ const HomeScreen = {
     const hasQuestions = computed(() => props.questions.length > 0);
     const quizOrder = ref('random');
     const sequentialProgress = ref(null);
-    const continueSequential = ref(true);
+    const seqStartMode = ref('beginning'); // 'beginning' | 'continue' | 'custom'
+    const customStartNo = ref(1);
     const suspendedSession = ref(null);
 
     const countOptions = computed(() => {
@@ -229,6 +246,19 @@ const HomeScreen = {
       const candidates = [10, 20, 30, 50, n];
       return [...new Set(candidates.filter((c) => c <= n && c > 0))].sort((a, b) => a - b);
     });
+
+    // Default to "continue" once we know both the saved progress and the
+    // question list length (question list may load asynchronously after mount).
+    watch(
+      () => [sequentialProgress.value, props.questions.length],
+      () => {
+        if (sequentialProgress.value && sequentialProgress.value.lastIndex > 0
+          && props.questions.length > 0 && sequentialProgress.value.lastIndex < props.questions.length) {
+          seqStartMode.value = 'continue';
+        }
+      },
+      { immediate: true }
+    );
 
     onMounted(async () => {
       try {
@@ -292,9 +322,12 @@ const HomeScreen = {
         pool = Parser.shuffleArray(props.questions.filter((q) => ids.has(q.id))).slice(0, count);
         if (pool.length < count) pool = [...pool, ...Parser.shuffleArray(props.questions.filter((q) => !ids.has(q.id)))].slice(0, count);
       } else if (quizOrder.value === 'sequential') {
-        if (continueSequential.value && sequentialProgress.value && sequentialProgress.value.lastIndex > 0) {
+        if (seqStartMode.value === 'continue' && sequentialProgress.value && sequentialProgress.value.lastIndex > 0) {
           const prog = sequentialProgress.value.lastIndex;
           seqStartIdx = prog < props.questions.length ? prog : 0;
+        } else if (seqStartMode.value === 'custom') {
+          const n = Math.min(Math.max(1, customStartNo.value || 1), props.questions.length);
+          seqStartIdx = n - 1;
         }
         pool = props.questions.slice(seqStartIdx, seqStartIdx + count);
         if (!pool.length) pool = props.questions.slice(0, count);
@@ -320,10 +353,18 @@ const HomeScreen = {
     function resetSeqProgress() {
       localStorage.removeItem('pmp-sequential-progress');
       sequentialProgress.value = null;
-      continueSequential.value = true;
+      seqStartMode.value = 'beginning';
     }
 
-    return { stats, recentSessions, hasHistory, loadError, fileInput, selectedCount, quizOrder, sequentialProgress, continueSequential, suspendedSession, countOptions, hasQuestions, formatDate, showFileInput, onFileChange, startQuiz, resumeQuiz, discardSuspended, resetSeqProgress };
+    function clampCustomStartNo() {
+      const max = props.questions.length || 1;
+      let n = Math.round(Number(customStartNo.value) || 1);
+      if (n < 1) n = 1;
+      if (n > max) n = max;
+      customStartNo.value = n;
+    }
+
+    return { stats, recentSessions, hasHistory, loadError, fileInput, selectedCount, quizOrder, sequentialProgress, seqStartMode, customStartNo, suspendedSession, countOptions, hasQuestions, formatDate, showFileInput, onFileChange, startQuiz, resumeQuiz, discardSuspended, resetSeqProgress, clampCustomStartNo };
   },
 };
 
