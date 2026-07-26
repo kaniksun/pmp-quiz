@@ -702,6 +702,10 @@ const QuizScreen = {
     }
 
     function nextQuestion() {
+      // Save immediately when the user advances, so iOS background kills
+      // right after tapping "next" still keep progress.
+      persistCheckpoint();
+
       if (qno.value + 1 >= props.questions.length) {
         isFinalized = true;
         localStorage.removeItem('pmp-quiz-suspended');
