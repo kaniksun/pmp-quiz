@@ -8,7 +8,7 @@
  *   history → past sessions + overall stats
  */
 
-const { createApp, ref, computed, reactive, onMounted, watch } = Vue;
+const { createApp, ref, computed, reactive, onMounted, onUnmounted, watch } = Vue;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -515,8 +515,10 @@ const QuizScreen = {
     const lastCorrect = ref(init.lastCorrect ?? null);
     const startTime = ref(Date.now());
     const elapsed = ref(0);
+    let isFinalized = false;
 
     let timerHandle = null;
+    let checkpointHandle = null;
     function startTimer() {
       startTime.value = Date.now();
       clearInterval(timerHandle);
@@ -524,7 +526,57 @@ const QuizScreen = {
     }
     function stopTimer() { clearInterval(timerHandle); }
 
-    onMounted(startTimer);
+    function buildSuspendState() {
+      return {
+        questions: props.questions,
+        results: results.value,
+        qno: qno.value,
+        phase: phase.value,
+        selected: selected.value,
+        matchSelected: matchSelected.value,
+        lastCorrect: lastCorrect.value,
+        savedAt: new Date().toISOString(),
+        mode: props.mode,
+        seqStartIdx: props.seqStartIdx,
+      };
+    }
+
+    function persistCheckpoint() {
+      try {
+        localStorage.setItem('pmp-quiz-suspended', JSON.stringify(buildSuspendState()));
+      } catch (_) {}
+
+      // Keep sequential progress fresh even if the app is background-killed.
+      if (props.mode === 'sequential') {
+        const nextIdx = Number(props.seqStartIdx || 0) + results.value.length;
+        try {
+          localStorage.setItem('pmp-sequential-progress', JSON.stringify({ lastIndex: nextIdx }));
+        } catch (_) {}
+      }
+    }
+
+    function onVisibilityChange() {
+      if (document.visibilityState === 'hidden') persistCheckpoint();
+    }
+
+    function onPageHide() {
+      persistCheckpoint();
+    }
+
+    onMounted(() => {
+      startTimer();
+      checkpointHandle = setInterval(persistCheckpoint, 15000);
+      document.addEventListener('visibilitychange', onVisibilityChange);
+      window.addEventListener('pagehide', onPageHide);
+    });
+
+    onUnmounted(() => {
+      stopTimer();
+      clearInterval(checkpointHandle);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('pagehide', onPageHide);
+      if (!isFinalized) persistCheckpoint();
+    });
 
     const current = computed(() => props.questions[qno.value]);
     const showCaseStudy = ref(false);
@@ -640,29 +692,18 @@ const QuizScreen = {
       lastCorrect.value = isCorrect;
       results.value.push({ question: q, selected: selAnswer, isCorrect, timeMs });
       phase.value = 'reviewed';
+      persistCheckpoint();
     }
 
     function handleAbort() {
       stopTimer();
-      // Persist current quiz state so the user can resume later
-      const state = {
-        questions: props.questions,
-        results: results.value,
-        qno: qno.value,
-        phase: phase.value,
-        selected: selected.value,
-        matchSelected: matchSelected.value,
-        lastCorrect: lastCorrect.value,
-        savedAt: new Date().toISOString(),
-        mode: props.mode,
-        seqStartIdx: props.seqStartIdx,
-      };
-      try { localStorage.setItem('pmp-quiz-suspended', JSON.stringify(state)); } catch (_) {}
+      persistCheckpoint();
       emit('abort');
     }
 
     function nextQuestion() {
       if (qno.value + 1 >= props.questions.length) {
+        isFinalized = true;
         localStorage.removeItem('pmp-quiz-suspended');
         emit('complete', results.value);
         return;
@@ -675,6 +716,7 @@ const QuizScreen = {
       elapsed.value = 0;
       showCaseStudy.value = false;
       startTimer();
+      persistCheckpoint();
     }
 
     return {
