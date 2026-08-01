@@ -126,15 +126,15 @@ const HomeScreen = {
           <div class="bg-white rounded-2xl shadow-sm px-4 py-4">
             <p class="text-sm text-gray-500 mb-2">出題順</p>
             <div class="flex gap-2">
-              <button @click="quizOrder = 'random'"
-                :class="quizOrder === 'random' ? 'bg-indigo-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-                class="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all">
-                🔀 ランダム
-              </button>
               <button @click="quizOrder = 'sequential'"
                 :class="quizOrder === 'sequential' ? 'bg-indigo-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
                 class="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all">
                 📋 順番どおり
+              </button>
+              <button @click="quizOrder = 'random'"
+                :class="quizOrder === 'random' ? 'bg-indigo-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+                class="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all">
+                🔀 ランダム
               </button>
             </div>
           </div>
@@ -151,11 +151,6 @@ const HomeScreen = {
               </div>
 
               <div class="flex flex-wrap gap-2">
-                <button @click="seqStartMode = 'beginning'"
-                  :class="seqStartMode === 'beginning' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100'"
-                  class="flex-1 py-2 rounded-xl text-sm font-semibold transition-all border border-indigo-100">
-                  最初から
-                </button>
                 <button v-if="sequentialProgress && sequentialProgress.lastIndex > 0 && sequentialProgress.lastIndex < questions.length"
                   @click="seqStartMode = 'continue'"
                   :class="seqStartMode === 'continue' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100'"
@@ -203,6 +198,13 @@ const HomeScreen = {
           <span class="text-gray-400">›</span>
         </button>
 
+        <!-- Glossary shortcut -->
+        <button @click="$emit('navigate', 'glossary')"
+          class="w-full flex items-center justify-between bg-white rounded-2xl shadow-sm px-4 py-3 hover:bg-gray-50 transition-colors">
+          <span class="text-gray-700 font-medium">📖 アジャイル用語集</span>
+          <span class="text-gray-400">›</span>
+        </button>
+
         <!-- Recent sessions -->
         <div v-if="recentSessions.length" class="bg-white rounded-2xl shadow-sm p-4">
           <p class="text-xs text-gray-400 uppercase tracking-wide mb-3">最近のセッション</p>
@@ -237,7 +239,7 @@ const HomeScreen = {
     const hasQuestions = computed(() => props.questions.length > 0);
     const quizOrder = ref('random');
     const sequentialProgress = ref(null);
-    const seqStartMode = ref('beginning'); // 'beginning' | 'continue' | 'custom'
+    const seqStartMode = ref('custom'); // 'continue' | 'custom' ('custom' with 1 = start from beginning)
     const customStartNo = ref(1);
     const suspendedSession = ref(null);
 
@@ -353,7 +355,8 @@ const HomeScreen = {
     function resetSeqProgress() {
       localStorage.removeItem('pmp-sequential-progress');
       sequentialProgress.value = null;
-      seqStartMode.value = 'beginning';
+      seqStartMode.value = 'custom';
+      customStartNo.value = 1;
     }
 
     function clampCustomStartNo() {
@@ -484,6 +487,22 @@ const QuizScreen = {
             </div>
             <p v-if="current.explan" class="text-gray-600 text-sm leading-relaxed">{{ current.explan }}</p>
             <p v-else class="text-gray-400 text-sm italic">解説なし</p>
+
+            <!-- Related agile terms -->
+            <div v-if="relatedTerms.length" class="mt-3 pt-3 border-t border-gray-100">
+              <p class="text-xs text-gray-400 mb-2">🔤 関連用語</p>
+              <div class="flex flex-wrap gap-2">
+                <button v-for="t in relatedTerms" :key="t.id" @click="toggleTerm(t.id)"
+                  :class="openTermId === t.id ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'"
+                  class="text-xs font-semibold px-3 py-1.5 rounded-full transition-all">
+                  {{ t.term }}
+                </button>
+              </div>
+              <div v-if="activeTerm" class="mt-2 bg-indigo-50 border border-indigo-100 rounded-xl p-3">
+                <p class="text-xs font-bold text-indigo-700 mb-1">{{ activeTerm.term }}</p>
+                <p class="text-xs text-gray-600 leading-relaxed">{{ activeTerm.definition }}</p>
+              </div>
+            </div>
           </div>
         </transition>
       </div>
@@ -581,6 +600,12 @@ const QuizScreen = {
     const current = computed(() => props.questions[qno.value]);
     const showCaseStudy = ref(false);
     const caseStudy = computed(() => (typeof CaseStudies !== 'undefined' && current.value) ? CaseStudies.forQuestion(current.value.id) : null);
+    const openTermId = ref(null);
+    const relatedTerms = computed(() => (typeof Glossary !== 'undefined' && current.value && phase.value === 'reviewed') ? Glossary.forQuestion(current.value) : []);
+    const activeTerm = computed(() => relatedTerms.value.find((t) => t.id === openTermId.value) || null);
+    function toggleTerm(id) {
+      openTermId.value = openTermId.value === id ? null : id;
+    }
 
     const timerText = computed(() => {
       const s = Math.floor(elapsed.value / 1000);
@@ -719,6 +744,7 @@ const QuizScreen = {
       lastCorrect.value = null;
       elapsed.value = 0;
       showCaseStudy.value = false;
+      openTermId.value = null;
       startTimer();
       persistCheckpoint();
     }
@@ -727,6 +753,7 @@ const QuizScreen = {
       qno, phase, selected, matchSelected, results, lastCorrect, elapsed,
       current, timerText, progressPct, optionList, correctIndices, correctDisplay, correctTextDisplay, canSubmit,
       caseStudy, showCaseStudy,
+      relatedTerms, openTermId, activeTerm, toggleTerm,
       toggleOption, optionClass, optionCheckClass, reviewIcon, matchSelectClass,
       submitAnswer, nextQuestion, handleAbort,
     };
@@ -804,6 +831,20 @@ const ResultScreen = {
           <p v-if="r._open && r.question.explan" class="mt-2 ml-7 text-xs text-gray-500 leading-relaxed">
             {{ r.question.explan }}
           </p>
+          <!-- Related agile terms -->
+          <div v-if="r._open && getRelatedTerms(r.question).length" class="mt-2 ml-7">
+            <div class="flex flex-wrap gap-2">
+              <button v-for="t in getRelatedTerms(r.question)" :key="t.id" @click="r._openTerm = (r._openTerm === t.id ? null : t.id)"
+                :class="r._openTerm === t.id ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'"
+                class="text-xs font-semibold px-3 py-1.5 rounded-full transition-all">
+                {{ t.term }}
+              </button>
+            </div>
+            <div v-if="r._openTerm" class="mt-2 bg-indigo-50 border border-indigo-100 rounded-xl p-3">
+              <p class="text-xs font-bold text-indigo-700 mb-1">{{ getTermById(r._openTerm).term }}</p>
+              <p class="text-xs text-gray-600 leading-relaxed">{{ getTermById(r._openTerm).definition }}</p>
+            </div>
+          </div>
           <div class="mt-1 ml-7 text-xs text-gray-300">⏱ {{ fmtSec(r.timeMs) }}</div>
         </div>
       </div>
@@ -836,7 +877,15 @@ const ResultScreen = {
       return 'text-gray-400';
     }
 
-    return { total, correct, accuracy, avgTime, getOpts, optSummaryClass, fmtSec };
+    function getRelatedTerms(question) {
+      return (typeof Glossary !== 'undefined') ? Glossary.forQuestion(question) : [];
+    }
+
+    function getTermById(id) {
+      return (typeof Glossary !== 'undefined') ? Glossary.getById(id) : null;
+    }
+
+    return { total, correct, accuracy, avgTime, getOpts, optSummaryClass, getRelatedTerms, getTermById, fmtSec };
   },
 };
 
@@ -1021,10 +1070,63 @@ const HistoryScreen = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// GlossaryScreen
+// ─────────────────────────────────────────────────────────────────────────────
+const GlossaryScreen = {
+  template: `
+    <div class="flex flex-col min-h-screen bg-gray-50">
+      <!-- Header -->
+      <div class="bg-gradient-to-br from-indigo-800 to-violet-700 px-5 pt-12 pb-6 text-white">
+        <button @click="$emit('back')" class="text-indigo-200 text-sm font-medium mb-3">← 戻る</button>
+        <h1 class="text-2xl font-bold mb-3">📖 アジャイル用語集</h1>
+        <input v-model="query" type="text" placeholder="用語を検索..."
+          class="w-full rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-300">
+      </div>
+
+      <!-- Term list -->
+      <div class="flex-1 px-4 py-5 space-y-5 overflow-y-auto">
+        <p v-if="!filteredCategories.length" class="text-center text-gray-400 text-sm py-10">該当する用語が見つかりませんでした。</p>
+        <div v-for="cat in filteredCategories" :key="cat" class="space-y-2">
+          <p class="text-xs font-bold text-indigo-500 uppercase tracking-wide">{{ cat }}</p>
+          <div v-for="t in byCategory(cat)" :key="t.id" class="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <button @click="openId = (openId === t.id ? null : t.id)"
+              class="w-full flex items-center justify-between px-4 py-3 text-left">
+              <span class="font-semibold text-gray-800 text-sm">{{ t.term }}</span>
+              <span class="text-gray-400 text-xs">{{ openId === t.id ? '▲' : '▼' }}</span>
+            </button>
+            <p v-if="openId === t.id" class="px-4 pb-4 text-sm text-gray-600 leading-relaxed">{{ t.definition }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  `,
+  emits: ['back'],
+  setup() {
+    const query = ref('');
+    const openId = ref(null);
+
+    const filteredTerms = computed(() => {
+      const q = query.value.trim();
+      const terms = (typeof Glossary !== 'undefined') ? Glossary.all() : [];
+      if (!q) return terms;
+      return terms.filter((t) => t.term.includes(q) || (t.aliases || []).some((a) => a.includes(q)) || t.definition.includes(q));
+    });
+
+    const filteredCategories = computed(() => [...new Set(filteredTerms.value.map((t) => t.category))]);
+
+    function byCategory(cat) {
+      return filteredTerms.value.filter((t) => t.category === cat);
+    }
+
+    return { query, openId, filteredCategories, byCategory };
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Root App
 // ─────────────────────────────────────────────────────────────────────────────
 createApp({
-  components: { HomeScreen, QuizScreen, ResultScreen, HistoryScreen },
+  components: { HomeScreen, QuizScreen, ResultScreen, HistoryScreen, GlossaryScreen },
   template: `
     <div>
       <transition name="fade" mode="out-in">
@@ -1049,6 +1151,9 @@ createApp({
           @retry-wrong="retryWrong" />
 
         <HistoryScreen v-else-if="screen === 'history'" key="history"
+          @back="screen = 'home'" />
+
+        <GlossaryScreen v-else-if="screen === 'glossary'" key="glossary"
           @back="screen = 'home'" />
       </transition>
     </div>
@@ -1086,7 +1191,7 @@ createApp({
     }
 
     async function onQuizComplete(results) {
-      quizResults.value = results.map((r) => ({ ...r, _open: false }));
+      quizResults.value = results.map((r) => ({ ...r, _open: false, _openTerm: null }));
 
       const total = results.length;
       const correct = results.filter((r) => r.isCorrect === true).length;
