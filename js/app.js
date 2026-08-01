@@ -38,7 +38,7 @@ const HomeScreen = {
         <div class="absolute -top-8 -right-8 w-40 h-40 bg-white/5 rounded-full"></div>
         <div class="absolute -bottom-12 -left-6 w-52 h-52 bg-white/5 rounded-full"></div>
         <div class="relative">
-          <p class="text-indigo-200 text-xs font-semibold uppercase tracking-widest mb-1">PMP 問題演習</p>
+          <p class="text-indigo-200 text-xs font-semibold uppercase tracking-widest mb-1">PMP Learning</p>
           <h1 class="text-3xl font-bold mb-4">継続が合格への道</h1>
           <!-- Stat pills -->
           <div class="grid grid-cols-3 gap-2">
@@ -201,7 +201,7 @@ const HomeScreen = {
         <!-- Glossary shortcut -->
         <button @click="$emit('navigate', 'glossary')"
           class="w-full flex items-center justify-between bg-white rounded-2xl shadow-sm px-4 py-3 hover:bg-gray-50 transition-colors">
-          <span class="text-gray-700 font-medium">📖 アジャイル用語集</span>
+          <span class="text-gray-700 font-medium">📖 PMP用語集</span>
           <span class="text-gray-400">›</span>
         </button>
 
@@ -1092,7 +1092,7 @@ const GlossaryScreen = {
       <!-- Header -->
       <div class="bg-gradient-to-br from-indigo-800 to-violet-700 px-5 pt-12 pb-6 text-white">
         <button @click="$emit('back')" class="text-indigo-200 text-sm font-medium mb-3">← 戻る</button>
-        <h1 class="text-2xl font-bold mb-3">📖 アジャイル用語集</h1>
+        <h1 class="text-2xl font-bold mb-3">📖 PMP用語集</h1>
         <input v-model="query" type="text" placeholder="用語を検索..."
           class="w-full rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-300">
       </div>

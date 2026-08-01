@@ -1,5 +1,5 @@
 /**
- * glossary.js — アジャイル用語集
+ * glossary.js — PMP用語集
  *
  * データ形式（ハイブリッド方式）:
  *   各用語は { id, term, aliases, category, definition, relatedQuestionIds? } を持つ。
