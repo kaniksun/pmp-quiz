@@ -501,6 +501,13 @@ const QuizScreen = {
               <div v-if="activeTerm" class="mt-2 bg-indigo-50 border border-indigo-100 rounded-xl p-3">
                 <p class="text-xs font-bold text-indigo-700 mb-1">{{ activeTerm.term }}</p>
                 <p class="text-xs text-gray-600 leading-relaxed">{{ activeTerm.definition }}</p>
+                <div v-if="activeTerm.diagram" class="mt-2 bg-white border border-indigo-100 rounded-lg p-2 overflow-x-auto">
+                  <div class="max-w-xs mx-auto" v-html="activeTerm.diagram"></div>
+                </div>
+                <div v-if="activeTerm.example" class="mt-2 bg-amber-50 border border-amber-100 rounded-lg p-2">
+                  <p class="text-[11px] font-bold text-amber-600 mb-1">🧮 計算例</p>
+                  <p class="text-[11px] text-gray-700 leading-relaxed">{{ activeTerm.example }}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -843,6 +850,13 @@ const ResultScreen = {
             <div v-if="r._openTerm" class="mt-2 bg-indigo-50 border border-indigo-100 rounded-xl p-3">
               <p class="text-xs font-bold text-indigo-700 mb-1">{{ getTermById(r._openTerm).term }}</p>
               <p class="text-xs text-gray-600 leading-relaxed">{{ getTermById(r._openTerm).definition }}</p>
+              <div v-if="getTermById(r._openTerm).diagram" class="mt-2 bg-white border border-indigo-100 rounded-lg p-2 overflow-x-auto">
+                <div class="max-w-xs mx-auto" v-html="getTermById(r._openTerm).diagram"></div>
+              </div>
+              <div v-if="getTermById(r._openTerm).example" class="mt-2 bg-amber-50 border border-amber-100 rounded-lg p-2">
+                <p class="text-[11px] font-bold text-amber-600 mb-1">🧮 計算例</p>
+                <p class="text-[11px] text-gray-700 leading-relaxed">{{ getTermById(r._openTerm).example }}</p>
+              </div>
             </div>
           </div>
           <div class="mt-1 ml-7 text-xs text-gray-300">⏱ {{ fmtSec(r.timeMs) }}</div>
@@ -1094,7 +1108,17 @@ const GlossaryScreen = {
               <span class="font-semibold text-gray-800 text-sm">{{ t.term }}</span>
               <span class="text-gray-400 text-xs">{{ openId === t.id ? '▲' : '▼' }}</span>
             </button>
-            <p v-if="openId === t.id" class="px-4 pb-4 text-sm text-gray-600 leading-relaxed">{{ t.definition }}</p>
+            <div v-if="openId === t.id" class="px-4 pb-4">
+              <p class="text-sm text-gray-600 leading-relaxed">{{ t.definition }}</p>
+              <div v-if="t.diagram" class="mt-3 bg-gray-50 border border-gray-100 rounded-xl p-3 overflow-x-auto">
+                <p class="text-xs font-bold text-gray-400 mb-2">🗺 図解</p>
+                <div class="max-w-xs mx-auto" v-html="t.diagram"></div>
+              </div>
+              <div v-if="t.example" class="mt-3 bg-amber-50 border border-amber-100 rounded-xl p-3">
+                <p class="text-xs font-bold text-amber-600 mb-1">🧮 計算例</p>
+                <p class="text-xs text-gray-700 leading-relaxed">{{ t.example }}</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
