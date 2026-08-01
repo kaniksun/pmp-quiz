@@ -237,7 +237,7 @@ const HomeScreen = {
     const selectedCount = ref(10);
 
     const hasQuestions = computed(() => props.questions.length > 0);
-    const quizOrder = ref('random');
+    const quizOrder = ref('sequential');
     const sequentialProgress = ref(null);
     const seqStartMode = ref('custom'); // 'continue' | 'custom' ('custom' with 1 = start from beginning)
     const customStartNo = ref(1);
