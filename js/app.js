@@ -1048,7 +1048,7 @@ const HistoryScreen = {
         ]);
         stats.value = s;
         weakQuestions.value = w.slice(0, 10);
-        sessions.value = all;
+        sessions.value = all.reverse();
         labelStats.value = lb;
       } catch (_) {}
     });
