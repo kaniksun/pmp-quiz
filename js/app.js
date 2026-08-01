@@ -378,7 +378,7 @@ const QuizScreen = {
   template: `
     <div class="flex flex-col min-h-screen bg-gray-50">
       <!-- Top bar -->
-      <div class="bg-indigo-700 text-white px-4 pt-10 pb-4">
+      <div class="sticky top-0 z-10 bg-indigo-700 text-white px-4 pt-10 pb-4">
         <div class="flex items-center justify-between mb-3">
           <button @click="handleAbort" class="text-indigo-200 text-sm font-medium">← 中断</button>
           <span class="text-sm font-semibold">{{ qno + 1 }} / {{ questions.length }}</span>
@@ -774,7 +774,7 @@ const ResultScreen = {
   template: `
     <div class="flex flex-col min-h-screen bg-gray-50">
       <!-- Score header -->
-      <div class="bg-gradient-to-br from-indigo-800 to-violet-700 text-white px-5 pt-12 pb-8">
+      <div class="sticky top-0 z-10 bg-gradient-to-br from-indigo-800 to-violet-700 text-white px-5 pt-12 pb-8">
         <p class="text-indigo-200 text-sm mb-2">セッション結果</p>
         <div class="flex items-end gap-3 mb-4">
           <div class="text-6xl font-black">{{ accuracy }}<span class="text-3xl">%</span></div>
@@ -910,7 +910,7 @@ const HistoryScreen = {
   template: `
     <div class="flex flex-col min-h-screen bg-gray-50">
       <!-- Header -->
-      <div class="bg-gradient-to-br from-indigo-800 to-violet-700 text-white px-5 pt-10 pb-6">
+      <div class="sticky top-0 z-10 bg-gradient-to-br from-indigo-800 to-violet-700 text-white px-5 pt-10 pb-6">
         <div class="flex items-center gap-2 mb-4">
           <button @click="$emit('back')" class="text-indigo-200 text-sm">← 戻る</button>
         </div>
@@ -1090,7 +1090,7 @@ const GlossaryScreen = {
   template: `
     <div class="flex flex-col min-h-screen bg-gray-50">
       <!-- Header -->
-      <div class="bg-gradient-to-br from-indigo-800 to-violet-700 px-5 pt-12 pb-6 text-white">
+      <div class="sticky top-0 z-10 bg-gradient-to-br from-indigo-800 to-violet-700 px-5 pt-12 pb-6 text-white">
         <button @click="$emit('back')" class="text-indigo-200 text-sm font-medium mb-3">← 戻る</button>
         <h1 class="text-2xl font-bold mb-3">📖 PMP用語集</h1>
         <input v-model="query" type="text" placeholder="用語を検索..."
