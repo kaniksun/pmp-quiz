@@ -980,7 +980,13 @@ const HistoryScreen = {
 
         <!-- Weak questions list -->
         <div v-if="weakQuestions.length" class="bg-white rounded-2xl shadow-sm p-4">
-          <p class="text-xs text-gray-400 uppercase tracking-wide mb-3">苦手問題 TOP{{ weakQuestions.length }}</p>
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-xs text-gray-400 uppercase tracking-wide">苦手問題 TOP{{ weakQuestions.length }}</p>
+            <button @click="exportWeakCsv"
+              class="text-xs text-indigo-500 font-semibold border border-indigo-200 rounded-lg px-3 py-1.5 hover:bg-indigo-50 transition-colors">
+              📥 CSVエクスポート
+            </button>
+          </div>
           <div class="divide-y divide-gray-50">
             <div v-for="(q, i) in weakQuestions" :key="i" class="py-3">
               <div class="flex items-start justify-between gap-3">
@@ -1079,7 +1085,29 @@ const HistoryScreen = {
       }
     }
 
-    return { stats, sessions, weakQuestions, labelStats, chartData, formatDate, confirmClear, modeLabel };
+    async function exportWeakCsv() {
+      const all = await DB.getWeakQuestions();
+      if (!all.length) { alert('エクスポートできる苦手問題データがありません。'); return; }
+      const header = ['問題ID', '問題タイトル', 'カテゴリ', '誤答率(%)', '試行回数', '誤答回数'];
+      const rows = all.map((q) => [
+        q.id,
+        `"${(q.title || '').replace(/"/g, '""')}"`,
+        `"${(q.label || '').replace(/"/g, '""')}"`,
+        Math.round(q.wrongRate * 100),
+        q.attempts,
+        q.wrong,
+      ]);
+      const csv = [header.join(','), ...rows.map((r) => r.join(','))].join('\n');
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `pmp_weak_questions_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    return { stats, sessions, weakQuestions, labelStats, chartData, formatDate, confirmClear, modeLabel, exportWeakCsv };
   },
 };
 
