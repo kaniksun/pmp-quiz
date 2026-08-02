@@ -32,7 +32,7 @@ function fmtSec(ms) {
 // ─────────────────────────────────────────────────────────────────────────────
 const HomeScreen = {
   template: `
-    <div class="flex flex-col min-h-screen">
+    <div class="flex flex-col h-full">
       <!-- Header gradient -->
       <div class="bg-gradient-to-br from-indigo-800 via-indigo-700 to-violet-700 px-5 pt-12 pb-10 text-white relative overflow-hidden">
         <div class="absolute -top-8 -right-8 w-40 h-40 bg-white/5 rounded-full"></div>
@@ -59,7 +59,7 @@ const HomeScreen = {
       </div>
 
       <!-- Content -->
-      <div class="flex-1 bg-gray-50 px-4 py-6 space-y-5">
+      <div class="flex-1 bg-gray-50 px-4 py-6 space-y-5 overflow-y-auto">
 
         <!-- Resume suspended session -->
         <div v-if="suspendedSession" class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4">
@@ -376,9 +376,9 @@ const HomeScreen = {
 // ─────────────────────────────────────────────────────────────────────────────
 const QuizScreen = {
   template: `
-    <div class="flex flex-col min-h-screen bg-gray-50">
+    <div class="flex flex-col h-full bg-gray-50">
       <!-- Top bar -->
-      <div class="sticky top-0 z-10 bg-indigo-700 text-white px-4 pt-10 pb-4">
+      <div class="z-10 bg-indigo-700 text-white px-4 pt-10 pb-4">
         <div class="flex items-center justify-between mb-3">
           <button @click="handleAbort" class="text-indigo-200 text-sm font-medium">← 中断</button>
           <span class="text-sm font-semibold">{{ qno + 1 }} / {{ questions.length }}</span>
@@ -772,9 +772,9 @@ const QuizScreen = {
 // ─────────────────────────────────────────────────────────────────────────────
 const ResultScreen = {
   template: `
-    <div class="flex flex-col min-h-screen bg-gray-50">
+    <div class="flex flex-col h-full bg-gray-50">
       <!-- Score header -->
-      <div class="sticky top-0 z-10 bg-gradient-to-br from-indigo-800 to-violet-700 text-white px-5 pt-12 pb-8">
+      <div class="z-10 bg-gradient-to-br from-indigo-800 to-violet-700 text-white px-5 pt-12 pb-8">
         <p class="text-indigo-200 text-sm mb-2">セッション結果</p>
         <div class="flex items-end gap-3 mb-4">
           <div class="text-6xl font-black">{{ accuracy }}<span class="text-3xl">%</span></div>
@@ -908,9 +908,9 @@ const ResultScreen = {
 // ─────────────────────────────────────────────────────────────────────────────
 const HistoryScreen = {
   template: `
-    <div class="flex flex-col min-h-screen bg-gray-50">
+    <div class="flex flex-col h-full bg-gray-50">
       <!-- Header -->
-      <div class="sticky top-0 z-10 bg-gradient-to-br from-indigo-800 to-violet-700 text-white px-5 pt-10 pb-6">
+      <div class="z-10 bg-gradient-to-br from-indigo-800 to-violet-700 text-white px-5 pt-10 pb-6">
         <div class="flex items-center gap-2 mb-4">
           <button @click="$emit('back')" class="text-indigo-200 text-sm">← 戻る</button>
         </div>
@@ -1238,9 +1238,9 @@ const HistoryScreen = {
 // ─────────────────────────────────────────────────────────────────────────────
 const GlossaryScreen = {
   template: `
-    <div class="flex flex-col min-h-screen bg-gray-50">
+    <div class="flex flex-col h-full bg-gray-50">
       <!-- Header -->
-      <div class="sticky top-0 z-10 bg-gradient-to-br from-indigo-800 to-violet-700 px-5 pt-12 pb-6 text-white">
+      <div class="z-10 bg-gradient-to-br from-indigo-800 to-violet-700 px-5 pt-12 pb-6 text-white">
         <button @click="$emit('back')" class="text-indigo-200 text-sm font-medium mb-3">← 戻る</button>
         <h1 class="text-2xl font-bold mb-3">📖 PMP用語集</h1>
         <input v-model="query" type="text" placeholder="用語を検索..."
@@ -1302,7 +1302,7 @@ const GlossaryScreen = {
 createApp({
   components: { HomeScreen, QuizScreen, ResultScreen, HistoryScreen, GlossaryScreen },
   template: `
-    <div>
+    <div class="h-full">
       <transition name="fade" mode="out-in">
         <HomeScreen v-if="screen === 'home'" key="home"
           :questions="questions"
