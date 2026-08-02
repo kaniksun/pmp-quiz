@@ -32,7 +32,7 @@ function fmtSec(ms) {
 // ─────────────────────────────────────────────────────────────────────────────
 const HomeScreen = {
   template: `
-    <div class="flex flex-col min-h-screen">
+    <div class="flex flex-col h-full">
       <!-- Header gradient -->
       <div class="bg-gradient-to-br from-indigo-800 via-indigo-700 to-violet-700 px-5 pt-12 pb-10 text-white relative overflow-hidden">
         <div class="absolute -top-8 -right-8 w-40 h-40 bg-white/5 rounded-full"></div>
@@ -59,7 +59,7 @@ const HomeScreen = {
       </div>
 
       <!-- Content -->
-      <div class="flex-1 bg-gray-50 px-4 py-6 space-y-5">
+      <div class="flex-1 bg-gray-50 px-4 py-6 space-y-5 overflow-y-auto">
 
         <!-- Resume suspended session -->
         <div v-if="suspendedSession" class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4">
@@ -376,9 +376,9 @@ const HomeScreen = {
 // ─────────────────────────────────────────────────────────────────────────────
 const QuizScreen = {
   template: `
-    <div class="flex flex-col min-h-screen bg-gray-50">
+    <div class="flex flex-col h-full bg-gray-50">
       <!-- Top bar -->
-      <div class="sticky top-0 z-10 bg-indigo-700 text-white px-4 pt-10 pb-4">
+      <div class="z-10 bg-indigo-700 text-white px-4 pt-10 pb-4">
         <div class="flex items-center justify-between mb-3">
           <button @click="handleAbort" class="text-indigo-200 text-sm font-medium">← 中断</button>
           <span class="text-sm font-semibold">{{ qno + 1 }} / {{ questions.length }}</span>
@@ -772,9 +772,9 @@ const QuizScreen = {
 // ─────────────────────────────────────────────────────────────────────────────
 const ResultScreen = {
   template: `
-    <div class="flex flex-col min-h-screen bg-gray-50">
+    <div class="flex flex-col h-full bg-gray-50">
       <!-- Score header -->
-      <div class="sticky top-0 z-10 bg-gradient-to-br from-indigo-800 to-violet-700 text-white px-5 pt-12 pb-8">
+      <div class="z-10 bg-gradient-to-br from-indigo-800 to-violet-700 text-white px-5 pt-12 pb-8">
         <p class="text-indigo-200 text-sm mb-2">セッション結果</p>
         <div class="flex items-end gap-3 mb-4">
           <div class="text-6xl font-black">{{ accuracy }}<span class="text-3xl">%</span></div>
@@ -908,9 +908,9 @@ const ResultScreen = {
 // ─────────────────────────────────────────────────────────────────────────────
 const HistoryScreen = {
   template: `
-    <div class="flex flex-col min-h-screen bg-gray-50">
+    <div class="flex flex-col h-full bg-gray-50">
       <!-- Header -->
-      <div class="sticky top-0 z-10 bg-gradient-to-br from-indigo-800 to-violet-700 text-white px-5 pt-10 pb-6">
+      <div class="z-10 bg-gradient-to-br from-indigo-800 to-violet-700 text-white px-5 pt-10 pb-6">
         <div class="flex items-center gap-2 mb-4">
           <button @click="$emit('back')" class="text-indigo-200 text-sm">← 戻る</button>
         </div>
@@ -941,14 +941,16 @@ const HistoryScreen = {
         <!-- Bar chart of recent sessions -->
         <div v-if="sessions.length" class="bg-white rounded-2xl shadow-sm p-4">
           <p class="text-xs text-gray-400 uppercase tracking-wide mb-3">直近の正答率推移</p>
-          <div class="flex items-end gap-1.5 h-24">
-            <div v-for="(s, i) in chartData" :key="i"
-              class="flex-1 flex flex-col items-center gap-1">
-              <span class="text-xs text-gray-400 leading-none">{{ s.accuracy }}%</span>
-              <div class="w-full rounded-t-md transition-all"
-                :class="s.accuracy >= 70 ? 'bg-green-400' : s.accuracy >= 50 ? 'bg-amber-400' : 'bg-red-400'"
-                :style="{ height: Math.max(4, s.accuracy * 0.72) + 'px' }"></div>
-              <span class="text-xs text-gray-300 leading-none">{{ s.label }}</span>
+          <div class="overflow-x-auto pb-1">
+            <div class="flex items-end gap-1.5 h-28" :style="{ minWidth: chartData.length * 44 + 'px' }">
+              <div v-for="(s, i) in chartData" :key="i"
+                class="flex flex-col items-center gap-1" style="flex: 1; min-width: 36px;">
+                <span class="text-xs text-gray-400 leading-none">{{ s.accuracy }}%</span>
+                <div class="w-full rounded-t-md transition-all"
+                  :class="s.accuracy >= 70 ? 'bg-green-400' : s.accuracy >= 50 ? 'bg-amber-400' : 'bg-red-400'"
+                  :style="{ height: Math.max(4, s.accuracy * 0.72) + 'px' }"></div>
+                <span class="text-xs text-gray-300 leading-none">{{ s.label }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -980,7 +982,13 @@ const HistoryScreen = {
 
         <!-- Weak questions list -->
         <div v-if="weakQuestions.length" class="bg-white rounded-2xl shadow-sm p-4">
-          <p class="text-xs text-gray-400 uppercase tracking-wide mb-3">苦手問題 TOP{{ weakQuestions.length }}</p>
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-xs text-gray-400 uppercase tracking-wide">苦手問題 TOP{{ weakQuestions.length }}</p>
+            <button @click="exportWeakCsv"
+              class="text-xs text-indigo-500 font-semibold border border-indigo-200 rounded-lg px-3 py-1.5 hover:bg-indigo-50 transition-colors">
+              📥 CSVエクスポート
+            </button>
+          </div>
           <div class="divide-y divide-gray-50">
             <div v-for="(q, i) in weakQuestions" :key="i" class="py-3">
               <div class="flex items-start justify-between gap-3">
@@ -1000,6 +1008,26 @@ const HistoryScreen = {
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Cross-device transfer -->
+        <div class="bg-white rounded-2xl shadow-sm p-4">
+          <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">端末間データ移行</p>
+          <p class="text-xs text-gray-400 mb-3">JSON形式で書き出し・取り込みができます（iPhone ↔ PCなど）</p>
+          <div class="flex gap-2">
+            <button @click="exportHistoryJson"
+              class="flex-1 flex items-center justify-center gap-1.5 bg-indigo-50 text-indigo-600 font-semibold text-sm py-2.5 rounded-xl border border-indigo-100 hover:bg-indigo-100 transition-colors">
+              📤 書き出し
+            </button>
+            <label class="flex-1 flex items-center justify-center gap-1.5 bg-emerald-50 text-emerald-600 font-semibold text-sm py-2.5 rounded-xl border border-emerald-100 hover:bg-emerald-100 transition-colors cursor-pointer">
+              📥 取り込み
+              <input type="file" accept=".json" class="hidden" @change="importHistoryJson">
+            </label>
+          </div>
+          <p v-if="importMessage" class="mt-2 text-xs font-medium text-center"
+            :class="importMessage.ok ? 'text-emerald-600' : 'text-red-500'">
+            {{ importMessage.text }}
+          </p>
         </div>
 
         <!-- Session log -->
@@ -1040,8 +1068,13 @@ const HistoryScreen = {
     const sessions = ref([]);
     const weakQuestions = ref([]);
     const labelStats = ref([]);
+    const importMessage = ref(null);
 
     onMounted(async () => {
+      await loadData();
+    });
+
+    async function loadData() {
       try {
         const [s, w, all, lb] = await Promise.all([
           DB.getStats(), DB.getWeakQuestions(), DB.getSessions(), DB.getLabelStats(),
@@ -1051,7 +1084,7 @@ const HistoryScreen = {
         sessions.value = all.reverse();
         labelStats.value = lb;
       } catch (_) {}
-    });
+    }
 
     const chartData = computed(() => {
       return sessions.value.slice(0, 10).reverse().map((s, i) => ({
@@ -1079,7 +1112,124 @@ const HistoryScreen = {
       }
     }
 
-    return { stats, sessions, weakQuestions, labelStats, chartData, formatDate, confirmClear, modeLabel };
+    async function exportWeakCsv() {
+      const all = await DB.getWeakQuestions();
+      if (!all.length) { alert('エクスポートできる苦手問題データがありません。'); return; }
+      const header = ['問題ID', '問題タイトル', 'カテゴリ', '誤答率(%)', '試行回数', '誤答回数'];
+      const rows = all.map((q) => [
+        q.id,
+        `"${(q.title || '').replace(/"/g, '""')}"`,
+        `"${(q.label || '').replace(/"/g, '""')}"`,
+        Math.round(q.wrongRate * 100),
+        q.attempts,
+        q.wrong,
+      ]);
+      const csv = [header.join(','), ...rows.map((r) => r.join(','))].join('\n');
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `pmp_weak_questions_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    /**
+     * Export full history as JSON for cross-device import.
+     * Includes all weak question stats and the question metadata needed
+     * to reconstruct the history on another device.
+     */
+    async function exportHistoryJson() {
+      const all = await DB.getWeakQuestions();
+      if (!all.length) { alert('エクスポートできる苦手問題データがありません。'); return; }
+      const payload = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        weakStats: all.map((q) => ({
+          id: q.id,
+          attempts: q.attempts,
+          wrong: q.wrong,
+        })),
+        // Include minimal question metadata so the new device can show titles
+        // and use weak-mode quiz even before loading the TSV file.
+        questions: all.map((q) => {
+          // eslint-disable-next-line no-unused-vars
+          const { wrongRate, attempts, wrong, ...qData } = q;
+          return qData;
+        }),
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `pmp_history_${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    /**
+     * Import history JSON exported from another device.
+     * Creates synthetic answer records so weak-question stats are reconstructed.
+     */
+    async function importHistoryJson(e) {
+      importMessage.value = null;
+      const file = e.target.files[0];
+      if (!file) return;
+      // Reset so the same file can be selected again
+      e.target.value = '';
+      let data;
+      try {
+        data = JSON.parse(await file.text());
+      } catch (_) {
+        importMessage.value = { ok: false, text: 'ファイルの読み込みに失敗しました（無効なJSON）。' };
+        return;
+      }
+      if (!data || data.version !== 1 || !Array.isArray(data.weakStats)) {
+        importMessage.value = { ok: false, text: '対応していないファイル形式です。' };
+        return;
+      }
+      try {
+        // Restore question metadata (upsert — keeps existing data if already loaded)
+        if (Array.isArray(data.questions) && data.questions.length) {
+          await DB.mergeQuestions(data.questions);
+        }
+        // Build synthetic answer records from weakStats
+        const answerRows = [];
+        for (const stat of data.weakStats) {
+          if (!stat.id || !Number.isFinite(stat.attempts) || !Number.isFinite(stat.wrong)) continue;
+          const wrong = Math.min(stat.wrong, stat.attempts);
+          const correct = stat.attempts - wrong;
+          for (let i = 0; i < wrong; i++) {
+            answerRows.push({ questionId: stat.id, isCorrect: false });
+          }
+          for (let i = 0; i < correct; i++) {
+            answerRows.push({ questionId: stat.id, isCorrect: true });
+          }
+        }
+        if (!answerRows.length) {
+          importMessage.value = { ok: false, text: 'インポートできるデータがありませんでした。' };
+          return;
+        }
+        // Save as one synthetic session
+        const total = data.weakStats.reduce((s, q) => s + (q.attempts || 0), 0);
+        const wrongTotal = data.weakStats.reduce((s, q) => s + (q.wrong || 0), 0);
+        const correctTotal = total - wrongTotal;
+        const sessionId = await DB.saveSession({
+          totalQuestions: total,
+          correct: correctTotal,
+          incorrect: wrongTotal,
+          accuracy: total > 0 ? Math.round((correctTotal / total) * 100) : 0,
+          mode: 'imported',
+        });
+        await DB.saveAnswers(answerRows.map((r) => ({ ...r, sessionId })));
+        await loadData();
+        importMessage.value = { ok: true, text: `✅ ${data.weakStats.length}件の苦手問題履歴を取り込みました。` };
+      } catch (err) {
+        importMessage.value = { ok: false, text: 'インポート中にエラーが発生しました: ' + err.message };
+      }
+    }
+
+    return { stats, sessions, weakQuestions, labelStats, chartData, importMessage, formatDate, confirmClear, modeLabel, exportWeakCsv, exportHistoryJson, importHistoryJson };
   },
 };
 
@@ -1088,9 +1238,9 @@ const HistoryScreen = {
 // ─────────────────────────────────────────────────────────────────────────────
 const GlossaryScreen = {
   template: `
-    <div class="flex flex-col min-h-screen bg-gray-50">
+    <div class="flex flex-col h-full bg-gray-50">
       <!-- Header -->
-      <div class="sticky top-0 z-10 bg-gradient-to-br from-indigo-800 to-violet-700 px-5 pt-12 pb-6 text-white">
+      <div class="z-10 bg-gradient-to-br from-indigo-800 to-violet-700 px-5 pt-12 pb-6 text-white">
         <button @click="$emit('back')" class="text-indigo-200 text-sm font-medium mb-3">← 戻る</button>
         <h1 class="text-2xl font-bold mb-3">📖 PMP用語集</h1>
         <input v-model="query" type="text" placeholder="用語を検索..."
@@ -1152,7 +1302,7 @@ const GlossaryScreen = {
 createApp({
   components: { HomeScreen, QuizScreen, ResultScreen, HistoryScreen, GlossaryScreen },
   template: `
-    <div>
+    <div class="h-full">
       <transition name="fade" mode="out-in">
         <HomeScreen v-if="screen === 'home'" key="home"
           :questions="questions"

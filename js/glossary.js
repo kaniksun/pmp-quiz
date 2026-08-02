@@ -183,7 +183,33 @@ const Glossary = (() => {
   { id: 'opa', term: '組織のプロセス資産（OPA）', aliases: ['OPA', '組織のプロセス資産'], category: 'ビジネス環境',
     definition: '組織が蓄積してきた計画、プロセス、ポリシー、標準手順、過去の知識ベースやテンプレートなどの内部資産。' },
   { id: 'compliance', term: 'コンプライアンス', aliases: ['コンプライアンス', '法令順守'], category: 'ビジネス環境',
-    definition: '法的要件、業界基準、安全規格、内部規定などにプロジェクトの活動や成果物が適合していることを確認・維持すること。' }
+    definition: '法的要件、業界基準、安全規格、内部規定などにプロジェクトの活動や成果物が適合していることを確認・維持すること。' },
+
+  // --- ステークホルダー・エンゲージメント ---
+  { id: 'stakeholder-engagement', term: 'ステークホルダー・エンゲージメント', aliases: ['ステークホルダー・エンゲージメント', 'エンゲージメント'], category: 'ステークホルダー',
+    definition: 'プロジェクトの目標・意思決定・実行にステークホルダーが積極的に関与できるよう、継続的なコミュニケーションと信頼構築を行うプロセス全般。' },
+  { id: 'stakeholder-engagement-plan', term: 'ステークホルダー・エンゲージメント計画書', aliases: ['ステークホルダー・エンゲージメント計画書'], category: 'ステークホルダー',
+    definition: '各ステークホルダーを「気づいていない」「抵抗」「中立」「支持」「主導」の5段階で現状と目標を分析し、最適なエンゲージメント戦略と行動計画をまとめた文書。' },
+  { id: 'stakeholder-analysis', term: 'ステークホルダー分析', aliases: ['ステークホルダー分析'], category: 'ステークホルダー',
+    definition: 'プロジェクトに関わる全ステークホルダーの影響力・関心度・期待値・懸念事項などを体系的に評価し、エンゲージメント戦略を立案するプロセス。' },
+  { id: 'power-interest-grid', term: '影響力/関心度マトリクス', aliases: ['影響力/関心度マトリクス', 'Power/Interest Grid', 'パワー/インタレスト・グリッド'], category: 'ステークホルダー',
+    definition: 'ステークホルダーを「影響力（権力）」と「関心度（利害）」の2軸で4象限に分類し、優先的なコミュニケーション戦略を決定するツール。',
+    diagram: '<svg viewBox="0 0 260 200" class="w-full h-auto"><line x1="10" y1="170" x2="250" y2="170" stroke="#9ca3af"/><line x1="10" y1="10" x2="10" y2="170" stroke="#9ca3af"/><line x1="130" y1="10" x2="130" y2="170" stroke="#d1d5db" stroke-dasharray="4 3"/><line x1="10" y1="90" x2="250" y2="90" stroke="#d1d5db" stroke-dasharray="4 3"/><text x="130" y="185" font-size="8" text-anchor="middle" fill="#6b7280">関心度（低→高）</text><text x="4" y="90" font-size="8" text-anchor="middle" fill="#6b7280" transform="rotate(-90,4,90)">影響力（低→高）</text><rect x="14" y="14" width="112" height="72" rx="6" fill="#eff6ff" stroke="#bfdbfe"/><text x="70" y="46" font-size="9" text-anchor="middle" fill="#1e40af">監視</text><text x="70" y="60" font-size="8" text-anchor="middle" fill="#3b82f6">（最小限の管理）</text><rect x="134" y="14" width="112" height="72" rx="6" fill="#ecfdf5" stroke="#a7f3d0"/><text x="190" y="46" font-size="9" text-anchor="middle" fill="#065f46">緊密に管理</text><text x="190" y="60" font-size="8" text-anchor="middle" fill="#059669">（重点関与）</text><rect x="14" y="94" width="112" height="72" rx="6" fill="#f9fafb" stroke="#e5e7eb"/><text x="70" y="126" font-size="9" text-anchor="middle" fill="#374151">情報提供</text><text x="70" y="140" font-size="8" text-anchor="middle" fill="#6b7280">（満足度維持）</text><rect x="134" y="94" width="112" height="72" rx="6" fill="#fffbeb" stroke="#fde68a"/><text x="190" y="126" font-size="9" text-anchor="middle" fill="#92400e">慎重に対応</text><text x="190" y="140" font-size="8" text-anchor="middle" fill="#b45309">（関係維持）</text></svg>' },
+  { id: 'stakeholder-engagement-assessment', term: 'ステークホルダー・エンゲージメント評価マトリクス', aliases: ['エンゲージメント評価マトリクス', 'ステークホルダー・エンゲージメント評価'], category: 'ステークホルダー',
+    definition: 'ステークホルダーの現在のエンゲージメント水準（気づいていない・抵抗・中立・支持・主導）と望ましい目標水準を比較し、ギャップを明らかにするツール。' },
+  { id: 'salience-model', term: 'セイリアンス・モデル', aliases: ['セイリアンス・モデル', 'Salience Model'], category: 'ステークホルダー',
+    definition: 'ステークホルダーを「権力（Power）」「緊急性（Urgency）」「正当性（Legitimacy）」の3軸で分類し、対応優先度を決定するモデル。' },
+
+  // --- コミュニケーション・マネジメント ---
+  { id: 'communication-management-plan', term: 'コミュニケーション・マネジメント計画書', aliases: ['コミュニケーション・マネジメント計画書', 'コミュニケーション計画'], category: 'コミュニケーション',
+    definition: 'プロジェクト情報の収集・作成・配布・保管・検索・管理の方法と責任を定義した計画書。誰に・何を・いつ・どのような方法で伝えるかを明記する。' },
+  { id: 'communication-methods', term: 'コミュニケーション方法', aliases: ['コミュニケーション方法', 'インタラクティブ', 'プッシュ型', 'プル型'], category: 'コミュニケーション',
+    definition: '双方向（インタラクティブ）・一方向送信（プッシュ型）・受信者主導（プル型）の3種類に大別される情報伝達方式。状況に応じて使い分ける。' },
+  { id: 'communication-channels', term: 'コミュニケーション・チャネル数', aliases: ['コミュニケーション・チャネル', 'コミュニケーション経路'], category: 'コミュニケーション',
+    definition: 'プロジェクト・チームのメンバー数がnのとき、潜在的な双方向コミュニケーション経路数はn×(n-1)÷2で求められる。メンバーの増加が調整コストを指数的に増大させることを示す。',
+    example: '例：メンバーが5人の場合、チャネル数＝5×(5-1)÷2＝10。メンバーが10人に増えると10×(10-1)÷2＝45となり、4.5倍に急増する。' },
+  { id: 'active-listening', term: 'アクティブ・リスニング', aliases: ['アクティブ・リスニング', '積極的傾聴'], category: 'コミュニケーション',
+    definition: '相手の言葉だけでなく感情・意図を理解しようとする積極的傾聴の技術。要約・質問・共感によって相互理解を深め、信頼関係を構築する。' }
   ];
 
   /**
