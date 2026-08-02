@@ -941,14 +941,16 @@ const HistoryScreen = {
         <!-- Bar chart of recent sessions -->
         <div v-if="sessions.length" class="bg-white rounded-2xl shadow-sm p-4">
           <p class="text-xs text-gray-400 uppercase tracking-wide mb-3">直近の正答率推移</p>
-          <div class="flex items-end gap-1.5 h-24">
-            <div v-for="(s, i) in chartData" :key="i"
-              class="flex-1 flex flex-col items-center gap-1">
-              <span class="text-xs text-gray-400 leading-none">{{ s.accuracy }}%</span>
-              <div class="w-full rounded-t-md transition-all"
-                :class="s.accuracy >= 70 ? 'bg-green-400' : s.accuracy >= 50 ? 'bg-amber-400' : 'bg-red-400'"
-                :style="{ height: Math.max(4, s.accuracy * 0.72) + 'px' }"></div>
-              <span class="text-xs text-gray-300 leading-none">{{ s.label }}</span>
+          <div class="overflow-x-auto pb-1">
+            <div class="flex items-end gap-1.5 h-28" :style="{ minWidth: chartData.length * 44 + 'px' }">
+              <div v-for="(s, i) in chartData" :key="i"
+                class="flex flex-col items-center gap-1" style="flex: 1; min-width: 36px;">
+                <span class="text-xs text-gray-400 leading-none">{{ s.accuracy }}%</span>
+                <div class="w-full rounded-t-md transition-all"
+                  :class="s.accuracy >= 70 ? 'bg-green-400' : s.accuracy >= 50 ? 'bg-amber-400' : 'bg-red-400'"
+                  :style="{ height: Math.max(4, s.accuracy * 0.72) + 'px' }"></div>
+                <span class="text-xs text-gray-300 leading-none">{{ s.label }}</span>
+              </div>
             </div>
           </div>
         </div>

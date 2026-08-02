@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pmp-quiz-v7';
+const CACHE_NAME = 'pmp-quiz-v8';
 const APP_SHELL = [
   './',
   './index.html',
