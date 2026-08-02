@@ -1008,6 +1008,26 @@ const HistoryScreen = {
           </div>
         </div>
 
+        <!-- Cross-device transfer -->
+        <div class="bg-white rounded-2xl shadow-sm p-4">
+          <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">端末間データ移行</p>
+          <p class="text-xs text-gray-400 mb-3">JSON形式で書き出し・取り込みができます（iPhone ↔ PCなど）</p>
+          <div class="flex gap-2">
+            <button @click="exportHistoryJson"
+              class="flex-1 flex items-center justify-center gap-1.5 bg-indigo-50 text-indigo-600 font-semibold text-sm py-2.5 rounded-xl border border-indigo-100 hover:bg-indigo-100 transition-colors">
+              📤 書き出し
+            </button>
+            <label class="flex-1 flex items-center justify-center gap-1.5 bg-emerald-50 text-emerald-600 font-semibold text-sm py-2.5 rounded-xl border border-emerald-100 hover:bg-emerald-100 transition-colors cursor-pointer">
+              📥 取り込み
+              <input type="file" accept=".json" class="hidden" @change="importHistoryJson">
+            </label>
+          </div>
+          <p v-if="importMessage" class="mt-2 text-xs font-medium text-center"
+            :class="importMessage.ok ? 'text-emerald-600' : 'text-red-500'">
+            {{ importMessage.text }}
+          </p>
+        </div>
+
         <!-- Session log -->
         <div class="bg-white rounded-2xl shadow-sm p-4">
           <p class="text-xs text-gray-400 uppercase tracking-wide mb-3">セッション一覧</p>
@@ -1046,8 +1066,13 @@ const HistoryScreen = {
     const sessions = ref([]);
     const weakQuestions = ref([]);
     const labelStats = ref([]);
+    const importMessage = ref(null);
 
     onMounted(async () => {
+      await loadData();
+    });
+
+    async function loadData() {
       try {
         const [s, w, all, lb] = await Promise.all([
           DB.getStats(), DB.getWeakQuestions(), DB.getSessions(), DB.getLabelStats(),
@@ -1057,7 +1082,7 @@ const HistoryScreen = {
         sessions.value = all.reverse();
         labelStats.value = lb;
       } catch (_) {}
-    });
+    }
 
     const chartData = computed(() => {
       return sessions.value.slice(0, 10).reverse().map((s, i) => ({
@@ -1107,7 +1132,102 @@ const HistoryScreen = {
       URL.revokeObjectURL(url);
     }
 
-    return { stats, sessions, weakQuestions, labelStats, chartData, formatDate, confirmClear, modeLabel, exportWeakCsv };
+    /**
+     * Export full history as JSON for cross-device import.
+     * Includes all weak question stats and the question metadata needed
+     * to reconstruct the history on another device.
+     */
+    async function exportHistoryJson() {
+      const all = await DB.getWeakQuestions();
+      if (!all.length) { alert('エクスポートできる苦手問題データがありません。'); return; }
+      const payload = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        weakStats: all.map((q) => ({
+          id: q.id,
+          attempts: q.attempts,
+          wrong: q.wrong,
+        })),
+        // Include minimal question metadata so the new device can show titles
+        // and use weak-mode quiz even before loading the TSV file.
+        questions: all.map((q) => {
+          // eslint-disable-next-line no-unused-vars
+          const { wrongRate, attempts, wrong, ...qData } = q;
+          return qData;
+        }),
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `pmp_history_${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    /**
+     * Import history JSON exported from another device.
+     * Creates synthetic answer records so weak-question stats are reconstructed.
+     */
+    async function importHistoryJson(e) {
+      importMessage.value = null;
+      const file = e.target.files[0];
+      if (!file) return;
+      // Reset so the same file can be selected again
+      e.target.value = '';
+      let data;
+      try {
+        data = JSON.parse(await file.text());
+      } catch (_) {
+        importMessage.value = { ok: false, text: 'ファイルの読み込みに失敗しました（無効なJSON）。' };
+        return;
+      }
+      if (!data || data.version !== 1 || !Array.isArray(data.weakStats)) {
+        importMessage.value = { ok: false, text: '対応していないファイル形式です。' };
+        return;
+      }
+      try {
+        // Restore question metadata (upsert — keeps existing data if already loaded)
+        if (Array.isArray(data.questions) && data.questions.length) {
+          await DB.mergeQuestions(data.questions);
+        }
+        // Build synthetic answer records from weakStats
+        const answerRows = [];
+        for (const stat of data.weakStats) {
+          if (!stat.id || !Number.isFinite(stat.attempts) || !Number.isFinite(stat.wrong)) continue;
+          const wrong = Math.min(stat.wrong, stat.attempts);
+          const correct = stat.attempts - wrong;
+          for (let i = 0; i < wrong; i++) {
+            answerRows.push({ questionId: stat.id, isCorrect: false });
+          }
+          for (let i = 0; i < correct; i++) {
+            answerRows.push({ questionId: stat.id, isCorrect: true });
+          }
+        }
+        if (!answerRows.length) {
+          importMessage.value = { ok: false, text: 'インポートできるデータがありませんでした。' };
+          return;
+        }
+        // Save as one synthetic session
+        const total = data.weakStats.reduce((s, q) => s + (q.attempts || 0), 0);
+        const wrongTotal = data.weakStats.reduce((s, q) => s + (q.wrong || 0), 0);
+        const correctTotal = total - wrongTotal;
+        const sessionId = await DB.saveSession({
+          totalQuestions: total,
+          correct: correctTotal,
+          incorrect: wrongTotal,
+          accuracy: total > 0 ? Math.round((correctTotal / total) * 100) : 0,
+          mode: 'imported',
+        });
+        await DB.saveAnswers(answerRows.map((r) => ({ ...r, sessionId })));
+        await loadData();
+        importMessage.value = { ok: true, text: `✅ ${data.weakStats.length}件の苦手問題履歴を取り込みました。` };
+      } catch (err) {
+        importMessage.value = { ok: false, text: 'インポート中にエラーが発生しました: ' + err.message };
+      }
+    }
+
+    return { stats, sessions, weakQuestions, labelStats, chartData, importMessage, formatDate, confirmClear, modeLabel, exportWeakCsv, exportHistoryJson, importHistoryJson };
   },
 };
 
