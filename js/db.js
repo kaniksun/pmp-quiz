@@ -110,6 +110,20 @@ const DB = (() => {
       return _clearAndPutAll('questions', questions);
     },
 
+    /**
+     * Upsert questions into the cache without clearing existing records.
+     * Used by the import feature to restore question metadata from another device.
+     */
+    async mergeQuestions(questions) {
+      return _ready.then(() => new Promise((resolve, reject) => {
+        const tx = _db.transaction('questions', 'readwrite');
+        const store = tx.objectStore('questions');
+        questions.forEach((q) => store.put(q));
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error);
+      }));
+    },
+
     /** Retrieve all cached questions */
     async getCachedQuestions() {
       return _getAll('questions');
