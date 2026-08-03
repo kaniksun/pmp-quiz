@@ -174,6 +174,14 @@ const Glossary = (() => {
     definition: 'CCBはChange Control Board（変更管理委員会）の略で、プロジェクトのベースラインに対する変更申請を評価、承認、延期、または却下する正式な権限を持つグループ。',
     diagram: '<svg viewBox="0 0 300 140" class="w-full h-auto"><defs><marker id="arrCcb" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#818cf8"/></marker></defs><rect x="110" y="6" width="80" height="30" rx="6" fill="#eef2ff" stroke="#6366f1"/><text x="150" y="26" font-size="9" text-anchor="middle" fill="#4338ca">変更要求</text><line x1="150" y1="36" x2="150" y2="48" stroke="#a5b4fc" marker-end="url(#arrCcb)"/><rect x="105" y="50" width="90" height="30" rx="6" fill="#eef2ff" stroke="#6366f1"/><text x="150" y="70" font-size="9" text-anchor="middle" fill="#4338ca">CCBレビュー</text><line x1="150" y1="80" x2="55" y2="102" stroke="#a5b4fc" marker-end="url(#arrCcb)"/><line x1="150" y1="80" x2="150" y2="102" stroke="#a5b4fc" marker-end="url(#arrCcb)"/><line x1="150" y1="80" x2="245" y2="102" stroke="#a5b4fc" marker-end="url(#arrCcb)"/><rect x="16" y="104" width="78" height="30" rx="6" fill="#ecfdf5" stroke="#34d399"/><text x="55" y="124" font-size="9" text-anchor="middle" fill="#047857">承認</text><rect x="111" y="104" width="78" height="30" rx="6" fill="#fef2f2" stroke="#fca5a5"/><text x="150" y="124" font-size="9" text-anchor="middle" fill="#b91c1c">却下</text><rect x="206" y="104" width="78" height="30" rx="6" fill="#fffbeb" stroke="#fcd34d"/><text x="245" y="124" font-size="9" text-anchor="middle" fill="#b45309">延期</text></svg>' },
 
+  // --- 調達・契約 ---
+  { id: 'fixed-price-contract', term: '固定価格契約（FFP）', aliases: ['固定価格契約', 'FFP', 'Firm Fixed Price'], category: '調達・契約',
+    definition: '成果物の範囲が明確な場合に、あらかじめ総額を固定して締結する契約。コスト超過リスクは主に売り手側が負う。' },
+  { id: 'cost-reimbursable-contract', term: '実費精算契約（コストプラス契約）', aliases: ['実費精算契約', 'コストプラス契約', 'コストプラス', 'Cost Plus'], category: '調達・契約',
+    definition: '実際に発生した許容コストを買い手が負担し、加えて手数料やインセンティブを支払う契約。要件の不確実性が高い場合に使われる。' },
+  { id: 'time-and-materials-contract', term: 'タイム・アンド・マテリアル契約（T&M）', aliases: ['タイム・アンド・マテリアル契約', 'T&M', 'Time and Materials'], category: '調達・契約',
+    definition: '単価（時間単価・材料単価）を事前合意し、実際の作業量に応じて支払う契約。固定価格契約と実費精算契約の中間的な性質を持つ。' },
+
   // --- 分析手法・フレームワーク ---
   { id: 'impact-mapping', term: 'インパクト・マッピング', aliases: ['インパクト・マッピング'], category: '分析手法',
     definition: 'ビジネス目標、アクター、インパクト、成果物・ストーリーをマインドマップ形式で結びつけ、目的主導でバックログを分析する手法。' },
