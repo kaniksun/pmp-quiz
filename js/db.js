@@ -91,7 +91,8 @@ const DB = (() => {
     /** Get all sessions, newest first */
     async getSessions() {
       const all = await _getAll('sessions');
-      return all.sort((a, b) => new Date(b.date) - new Date(a.date));
+      // Dates are stored as ISO-8601 strings, so lexical sort is stable across browsers.
+      return all.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
     },
 
     /** Save an array of answer records (each must include sessionId, questionId, isCorrect) */
@@ -117,6 +118,7 @@ const DB = (() => {
     /** Aggregate stats across all sessions/answers */
     async getStats() {
       const [sessions, answers] = await Promise.all([_getAll('sessions'), _getAll('answers')]);
+      const sortedSessions = [...sessions].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
       const total = answers.length;
       const correct = answers.filter((a) => a.isCorrect).length;
       const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
@@ -141,7 +143,7 @@ const DB = (() => {
         correctAnswers: correct,
         accuracy,
         streak,
-        recentSessions: sessions.slice(0, 5),
+        recentSessions: sortedSessions.slice(0, 5),
       };
     },
 

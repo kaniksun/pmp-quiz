@@ -131,6 +131,15 @@ const Glossary = (() => {
     definition: 'プロジェクトの最長経路（トータルフロートがゼロの経路）を特定し、最短完了期間を算出するスケジュール分析手法。',
     example: '例：Start→A（2日）→B（5日）→End（3日）の経路が合計10日で最長（クリティカル・パス、赤）。Start→A→C（3日）→End（4日）の経路は合計9日（灰色）のため、この経路には10－9＝1日分のトータルフロート（余裕）がある。',
     diagram: '<svg viewBox="0 0 280 140" class="w-full h-auto"><defs><marker id="arrCpm" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#9ca3af"/></marker><marker id="arrCpmR" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#ef4444"/></marker></defs><line x1="34" y1="70" x2="78" y2="70" stroke="#ef4444" stroke-width="2" marker-end="url(#arrCpmR)"/><text x="56" y="64" font-size="8" text-anchor="middle" fill="#ef4444">2日</text><line x1="102" y1="63" x2="158" y2="37" stroke="#ef4444" stroke-width="2" marker-end="url(#arrCpmR)"/><text x="130" y="42" font-size="8" text-anchor="middle" fill="#ef4444">5日</text><line x1="102" y1="77" x2="158" y2="103" stroke="#9ca3af" marker-end="url(#arrCpm)"/><text x="130" y="100" font-size="8" text-anchor="middle" fill="#6b7280">3日</text><line x1="182" y1="37" x2="238" y2="63" stroke="#ef4444" stroke-width="2" marker-end="url(#arrCpmR)"/><text x="210" y="42" font-size="8" text-anchor="middle" fill="#ef4444">3日</text><line x1="182" y1="103" x2="238" y2="77" stroke="#9ca3af" marker-end="url(#arrCpm)"/><text x="210" y="100" font-size="8" text-anchor="middle" fill="#6b7280">4日</text><circle cx="20" cy="70" r="16" fill="#eef2ff" stroke="#6366f1"/><text x="20" y="73" font-size="8" text-anchor="middle" fill="#4338ca">Start</text><circle cx="90" cy="70" r="16" fill="#eef2ff" stroke="#6366f1"/><text x="90" y="73" font-size="8" text-anchor="middle" fill="#4338ca">A</text><circle cx="170" cy="30" r="16" fill="#fef2f2" stroke="#ef4444"/><text x="170" y="33" font-size="8" text-anchor="middle" fill="#b91c1c">B</text><circle cx="170" cy="110" r="16" fill="#f3f4f6" stroke="#9ca3af"/><text x="170" y="113" font-size="8" text-anchor="middle" fill="#4b5563">C</text><circle cx="250" cy="70" r="16" fill="#eef2ff" stroke="#6366f1"/><text x="250" y="73" font-size="8" text-anchor="middle" fill="#4338ca">End</text></svg>' },
+  { id: 'roi', term: '投資収益率（ROI）', aliases: ['ROI', '投資収益率', 'Return on Investment'], category: '見積り・指標',
+    definition: '投資から得られた利益を投資額で割って表す指標。一般に ROI = (利益 - 投資額) ÷ 投資額 で計算し、値が高いほど投資効率が高いことを示す。',
+    example: '例：新機能への投資額が¥2,000,000、得られた利益が¥2,600,000の場合、ROI＝(2,600,000-2,000,000)÷2,000,000＝0.30（30%）。',
+    relatedQuestionIds: [143] },
+  { id: 'cost-benefit-analysis', term: '費用便益分析（Cost-Benefit Analysis）', aliases: ['費用便益分析', 'コスト便益分析', 'Cost-Benefit Analysis', 'CBA'], category: '見積り・指標',
+    definition: '想定される便益と必要コストを比較し、投資や実行可否の妥当性を評価する分析手法。ROI、NPV、回収期間などの指標と併用される。',
+    relatedQuestionIds: [145] },
+  { id: 'npv', term: '正味現在価値（NPV）', aliases: ['NPV', '正味現在価値', 'Net Present Value'], category: '見積り・指標',
+    definition: '将来のキャッシュフローを割引率で現在価値に換算し、初期投資を差し引いた価値。通常、NPVが正なら経済的に実行価値があると判断される。' },
 
   // --- 可視化・コミュニケーション ---
   { id: 'information-radiator', term: '情報ラジエーター', aliases: ['情報ラジエーター'], category: '可視化',
