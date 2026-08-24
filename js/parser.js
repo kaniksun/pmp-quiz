@@ -75,11 +75,20 @@ const Parser = (() => {
 
   /**
    * Shuffle answer options within a question.
-   * For match questions, options are not shuffled (order is meaningful).
+  * Matching options are shuffled too; answer indices are remapped accordingly.
    * Returns a new question object with shuffled options and updated ans.
    */
   function shuffleQuestion(q) {
-    if (q.questionType === 'match') return { ...q };
+    if (q.questionType === 'match') {
+      const options = q.matchOptions || [];
+      const shuffledOptions = shuffleArray(options);
+      const newIndexByOldIndex = new Map(
+        shuffledOptions.map((option, index) => [options.indexOf(option) + 1, index + 1]),
+      );
+      const answer = (q.ans || '').split(',').map(Number)
+        .map((oldIndex) => newIndexByOldIndex.get(oldIndex) || oldIndex);
+      return { ...q, matchOptions: shuffledOptions, ans: answer.join(',') };
+    }
 
     const keys = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6'];
     const ansDigs = (q.ans || '').split('').map(Number).filter((n) => !isNaN(n));
