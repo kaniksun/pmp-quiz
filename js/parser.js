@@ -68,6 +68,8 @@ const Parser = (() => {
     q.matchOptions = parseListField(q.matchOptions || '');
     // ans for match: "2,3,1,4" (1-based option index per row)
     q.ans = (q.ans || '').trim();
+    const answerCorrections = { 193: '2', 196: '2', 198: '2', 203: '2' };
+    if (answerCorrections[q.id]) q.ans = answerCorrections[q.id];
     // PMP category label (auto-assigned from question text)
     q.label = autoLabel(q.title);
     return q;
