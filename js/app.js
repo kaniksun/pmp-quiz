@@ -245,7 +245,7 @@ const HomeScreen = {
 
     const countOptions = computed(() => {
       const n = props.questions.length;
-      const candidates = [10, 20, 30, 50, n];
+      const candidates = [10, 20, 30, 50, 180, n];
       return [...new Set(candidates.filter((c) => c <= n && c > 0))].sort((a, b) => a - b);
     });
 
